@@ -1,7 +1,7 @@
 import unittest
 import logging
 import sys
-from ..src.log_simulator import check_facility, parse_arguments, generate_random_log_data, configure_logger, generate_log_message, get_log_format, generate_logs
+from src.log_simulator import check_facility, parse_arguments, generate_random_log_data, configure_logger, generate_log_message, get_log_format, generate_logs
 
 class TestLogSimulator(unittest.TestCase):
     def test_check_facility(self):
