@@ -1,0 +1,41 @@
+name: Directory Zipper
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'install/**'
+  workflow_dispatch:
+    
+jobs:
+  zip-directory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+
+      - name: Run tests
+        run: python -m unittest tests/test_log_simulator.py
+
+      - name: Zip directory
+        run: |
+          APP_DIRECTORY=tools/LinuxLogGenerator
+          DIRECTORY_TO_ZIP=src
+          OUTPUT_DIRECTORY=build
+          ZIP_FILE_NAME=LinuxLogGenerator.zip
+
+          mkdir -p $APP_DIRECTORY/$OUTPUT_DIRECTORY
+
+          cd $APP_DIRECTORY/$DIRECTORY_TO_ZIP
+          zip -r ../../$APP_DIRECTORY/$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Zip directory $DIRECTORY_TO_ZIP"
+          commit_options: "--no-verify"
