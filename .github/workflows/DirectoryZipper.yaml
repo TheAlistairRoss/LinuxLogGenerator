@@ -21,7 +21,9 @@ jobs:
 
       - name: Run tests
         run: python -m unittest tests/test_log_simulator.py
-
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          
       - name: Zip directory
         run: |
           APP_DIRECTORY=tools/LinuxLogGenerator
