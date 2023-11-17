@@ -46,15 +46,9 @@ if sys.version_info < (3, 10):
 
 valid_facilities = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
 valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-def check_facility(facility):
-    try:
-        logger = logging.getLogger(__name__)
-        handler = logging.handlers.SysLogHandler(facility=facility)
-        logger.addHandler(handler)
-        return True
-    except Exception:
-        return False
 
+def check_facility(facility):
+    return facility in valid_facilities
 
 def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description="Generate logs in either syslog or CEF format.")
@@ -99,6 +93,34 @@ def parse_arguments(args=None):
 
     return args
 
+def configure_logger(level, output, format):
+    # Check if level is a valid logging level
+    log_level = getattr(logging, level.upper(), None)
+    if log_level is None:
+        raise ValueError(f"Invalid logging level '{level}'")
+
+    # Set the output format to either 'cef' or 'syslog'
+    if format not in ['cef', 'syslog']:
+        raise ValueError("format must be either 'cef' or 'syslog'")
+    formatter = logging.Formatter(get_log_format(format))
+
+    # Check if output is a valid syslog facility or 'console'
+    if output == 'console':
+        handler = logging.StreamHandler()
+    else:
+        if not check_facility(output):
+            raise ValueError(f"Invalid syslog facility '{output}'")
+        handler = logging.handlers.SysLogHandler(address='/dev/log', facility=output)
+
+    handler.setLevel(log_level)
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+
+    return logger
+
 
 def generate_random_log_data(i):
 
@@ -129,7 +151,7 @@ def generate_random_log_data(i):
 
     response = random.choice(responses)
     auth_event = random.choice(auth_events)
-    decision = random.choice(decisions) if response == 'failure' else None
+    decision = response_map[response]
     reason = random.choice(reasons) if response == 'failure' else None
     user = random.choice(users)
 
@@ -152,35 +174,13 @@ def generate_random_log_data(i):
             'reason': reason,
             'cs1': 'password',
             'deviceProcessName': 'ssh',
-            'authDecision': response_map[decision],
+            'authDecision': decision,
             'act': auth_event,
             'suser': random.choice(['user', 'admin', 'service_account'])
         }
     }
     return log_data
 
-def configure_logger(level, facility, format):
-    log_level = getattr(logging, level.upper(), None)
-    if log_level is None:
-        raise ValueError(f"Invalid logging level '{level}'")
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(log_level)
-
-    try:
-        if facility == 'console':
-            handler = logging.StreamHandler()
-        else:
-            handler = logging.handlers.SysLogHandler(address='/dev/log', facility=facility)
-    except OSError as e:
-        raise ValueError(f"Unable to create handler: {e}")
-    handler.setLevel(log_level)
-
-    formatter = logging.Formatter(get_log_format(format))
-    handler.setFormatter(formatter)
-
-    logger.addHandler(handler)
-    return logger
 
 def generate_log_message(format, log_data, level, facility):
     level_number = getattr(logging, level.upper(), None)
@@ -254,7 +254,7 @@ def generate_logs(format, facility, events, rate, level, runtime):
             return
 
         try:
-            log_message = generate_log_message(format, log_data, log_level, facility)
+            log_message = generate_log_message(format, log_data, level, facility)
             logger.log(log_level, log_message)
         except ValueError as e:
             logging.error(str(e))
@@ -266,7 +266,7 @@ def generate_logs(format, facility, events, rate, level, runtime):
 
 def main():
     args = parse_arguments()
-    logger = configure_logger(args.level, args.facility)
+    logger = configure_logger(args.level, args.facility, args.format)
     generate_logs(logger, args.format, args.events, args.rate, args.level, args.runtime)
 
 
