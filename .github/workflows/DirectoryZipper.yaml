@@ -26,17 +26,20 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
 
-      - name: Zip directory
+      - name: Zip directories
         run: |
-          APP_DIRECTORY=tools/LinuxLogGenerator
-          DIRECTORY_TO_ZIP=src
-          OUTPUT_DIRECTORY=build
-          ZIP_FILE_NAME=LinuxLogGenerator.zip
-
-          mkdir -p $APP_DIRECTORY/$OUTPUT_DIRECTORY
-
-          cd $APP_DIRECTORY/$DIRECTORY_TO_ZIP
-          zip -r ../../$APP_DIRECTORY/$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
+            APP_DIRECTORY=tools/LinuxLogGenerator
+            DIRECTORIES_TO_ZIP="src install"
+            OUTPUT_DIRECTORY=build
+            ZIP_FILE_NAME=LinuxLogGenerator.zip
+        
+            mkdir -p $APP_DIRECTORY/$OUTPUT_DIRECTORY
+        
+            for dir in $DIRECTORIES_TO_ZIP; do
+              cd $APP_DIRECTORY/$dir
+              zip -r ../../$APP_DIRECTORY/$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
+              cd -
+            done
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5

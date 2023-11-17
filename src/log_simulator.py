@@ -139,8 +139,8 @@ def generate_random_log_data(i):
     }
     
     response_map = {
-        'allow': 'success',
-        'deny': 'failure',
+        'success': 'allow',
+        'failure': 'deny', 
     }
 
     decisions = ['allow', 'deny']

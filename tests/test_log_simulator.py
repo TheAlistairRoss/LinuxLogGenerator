@@ -21,11 +21,11 @@ class TestLogSimulator(unittest.TestCase):
         self.assertIn('device_event_class_id', log_data)
         self.assertIn('severity', log_data)
 
-    def test_configure_logger(self):
-        logger = configure_logger('INFO', 'console', 'syslog')
-        self.assertIsInstance(logger.handlers[0], logging.StreamHandler)
-        logger = configure_logger('INFO', 'auth', 'syslog')
-        self.assertIsInstance(logger.handlers[0], logging.handlers.SysLogHandler)
+def test_configure_logger(self):
+    logger = configure_logger('INFO', 'console', 'syslog')
+    self.assertIsInstance(logger.handlers[0], logging.StreamHandler)  # Expect StreamHandler for 'console' output
+    logger = configure_logger('INFO', 'auth', 'syslog')
+    self.assertIsInstance(logger.handlers[0], logging.handlers.SysLogHandler)  # Expect SysLogHandler for 'auth' output
 
     def test_generate_log_message(self):
         log_data = generate_random_log_data(1)
