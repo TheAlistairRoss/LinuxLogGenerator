@@ -5,6 +5,8 @@ on:
     paths:
       - 'src/**'
       - 'install/**'
+      - 'tests/**'
+      
   workflow_dispatch:
     
 jobs:
@@ -23,7 +25,7 @@ jobs:
         run: python -m unittest tests/test_log_simulator.py
         env:
           PYTHONPATH: ${{ github.workspace }}
-          
+
       - name: Zip directory
         run: |
           APP_DIRECTORY=tools/LinuxLogGenerator

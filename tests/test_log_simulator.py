@@ -18,8 +18,8 @@ class TestLogSimulator(unittest.TestCase):
 
     def test_generate_random_log_data(self):
         log_data = generate_random_log_data(1)
-        self.assertIn('auth_result', log_data)
-        self.assertIn('auth_event', log_data)
+        self.assertIn('device_event_class_id', log_data)
+        self.assertIn('severity', log_data)
 
     def test_configure_logger(self):
         logger = configure_logger('INFO', 'auth', 'syslog')

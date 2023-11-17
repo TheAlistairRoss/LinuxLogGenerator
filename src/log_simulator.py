@@ -33,6 +33,7 @@ Examples:
 """
 
 import logging
+import logging.handlers
 import time
 import argparse
 import sys
@@ -55,7 +56,7 @@ def check_facility(facility):
         return False
 
 
-def parse_arguments():
+def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description="Generate logs in either syslog or CEF format.")
     parser.add_argument("--config", type=str, help="Path to a configuration file.")
     parser.add_argument("--format", type=str, choices=["syslog", "cef"], default="syslog", help="The logging format. Default is 'syslog'.")
@@ -64,7 +65,7 @@ def parse_arguments():
     parser.add_argument("--rate", type=int, default=60, help="The event logging rate (seconds per event). Default is 60.")
     parser.add_argument("--level", type=str, choices=valid_levels, default="INFO", help="The logging level. Default is 'INFO'.")
     parser.add_argument("--runtime", type=int, default=0, help="The total running time in seconds. If set to 0, the script will run indefinitely. Default is 0.")
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if args.config:
         config = configparser.ConfigParser()
@@ -130,7 +131,6 @@ def generate_random_log_data(i):
     auth_event = random.choice(auth_events)
     decision = random.choice(decisions) if response == 'failure' else None
     reason = random.choice(reasons) if response == 'failure' else None
-    
     user = random.choice(users)
 
     log_data = {
@@ -138,7 +138,7 @@ def generate_random_log_data(i):
         'device_product': 'auth_server',
         'device_version': '1.0',
         'device_event_class_id': device_event_class_id_map[(response, auth_event)],
-        'name': f'Auth Event {i}',
+        'name': 'Log Simulator - Auth Event',
         'severity': random.randint(1, 10),
         'extension': {
             'src': f'192.168.0.{random.randint(1, 255)}',
@@ -188,7 +188,7 @@ def generate_log_message(format, log_data, level, facility):
         raise ValueError(f"Invalid logging level '{level}'")
 
     if format == 'syslog':
-        return f"<{valid_facilities.index(facility) * 8 + level_number}> {log_data['device_vendor']} {log_data['device_event_class_id']} {log_data['user']} {log_data['extension']['outcome']} {log_data['extension']['reason']}"
+        return f"<{valid_facilities.index(facility) * 8 + level_number}> {log_data['device_vendor']} {log_data['device_event_class_id']} {log_data['extension']['user']} {log_data['extension']['outcome']} {log_data['extension']['reason']}"
     elif format == 'cef':
         extension = ' '.join(f'{k}={v}' for k, v in log_data['extension'].items())
         return f"CEF:0|{log_data['device_vendor']}|{log_data['device_product']}|{log_data['device_version']}|{log_data['device_event_class_id']}|{log_data['name']}|{log_data['severity']}|{extension}"
