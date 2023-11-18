@@ -313,8 +313,6 @@ main() {
             remove_service_file
         fi
         remove_install_directory
-        fi
-
         echo -e "${GREEN}Uninstall Complete${NC}"
     fi
     echo -e "${BLUE}$divider${NC}"
