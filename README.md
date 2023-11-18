@@ -4,10 +4,11 @@
 
 1. Download the zip file from the GitHub repository. You can do this using the wget command:
 
-wget https://github.com/TheAlistairRoss/LinuxLogGenerator/raw/main/tools/LinuxLogGenerator/build/LinuxLogGenerator.zip
+wget https://raw.githubusercontent.com/TheAlistairRoss/LinuxLogGenerator/main/package/LinuxLogGenerator.zip
 
 2. Unzip the downloaded file. This will create a src and install directory:
 
+sudo apt install unzip
 unzip LinuxLogGenerator.zip
 
 3. Change into the install directory:
