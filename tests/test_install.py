@@ -8,7 +8,7 @@ script_path = '../install/install.sh'
 class TestInstallScript(unittest.TestCase):
     def test_install(self):
         # Run the install script silently as a service
-        subprocess.run(['sudo', 'bash', "$script_path", '-s', '-i'], check=True)
+        subprocess.run(['sudo', 'bash', script_path, '-s', '-i'], check=True)
 
         # Check if the log_simulator directory exists
         result = subprocess.run(['ls', '/opt'], capture_output=True, text=True)
@@ -31,7 +31,7 @@ class TestInstallScript(unittest.TestCase):
 
     def test_uninstall(self):
         # Run the uninstall script with default options
-        subprocess.run(['sudo', 'bash', "$script_path", '-u'], check=True)
+        subprocess.run(['sudo', 'bash', script_path, '-u'], check=True)
 
         # Check if the log_simulator directory does not exist
         result = subprocess.run(['ls', '/opt'], capture_output=True, text=True)
