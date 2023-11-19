@@ -186,6 +186,12 @@ make_script_executable() {
 copy_files() {
     if ! cmp -s "$source_path_to_python_script" "$destination_path_to_log_simulator"; then
         echo -e "${NC}Copying contents of $source_path_to_python_script to $destination_path_to_log_simulator${NC}"
+        
+        # Create the directory if it does not exist
+        if [ ! -d "$destination_path_to_log_simulator" ]; then
+            sudo mkdir -p "$destination_path_to_log_simulator"
+        fi
+
         sudo cp "$source_path_to_python_script" "$destination_path_to_log_simulator"        
         if [ $? -ne 0 ]; then
             echo -e "${RED}Failed to copy the files${NC}" 1>&2
