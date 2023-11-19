@@ -8,12 +8,12 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-title="Linux Log Generator Installer"
+title="Linux Log Generator - Installer"
 author="theAlistairRoss"
 len=${#title}
 divider=$(printf '%*s' "$len" '' | tr ' ' '-')
 
-echo -e "${BLUE}Linux Log Generator Installer${NC}"
+echo -e "${BLUE}$title${NC}"
 echo -e "Author: ${BLUE}@theAlistairRoss${NC}"
 echo -e "${BLUE}$divider${NC}"
 

@@ -2,24 +2,18 @@
 
 
 
-1. Download the zip file from the GitHub repository. You can do this using the wget command:
+1. Download the "download_and_install.sh" file from the GitHub repository. This will:
+    1. Download the zip file
+    1. Unpackage the zip file
+    1. Remove the zip file
+    1. Change directory
+    1. Set the install script as executable
+    1. Run the install script
 
-wget https://raw.githubusercontent.com/TheAlistairRoss/LinuxLogGenerator/main/package/LinuxLogGenerator.zip
+You can do this using the wget command:
 
-2. Unzip the downloaded file. This will create a src and install directory:
-
-sudo apt install unzip
-unzip LinuxLogGenerator.zip
-
-3. Change into the install directory:
-
-cd install
-
-
-4. Make the install.sh script executable:
-
-chmod +x install.sh
-
-5. Run the install.sh script with superuser privileges:
-
-sudo ./install.sh
+```bash
+wget https://raw.githubusercontent.com/TheAlistairRoss/LinuxLogGenerator/main/install/download_and_install_script.sh
+chmod +x download_and_install_script.sh
+sudo ./download_and_install_script.sh
+```
