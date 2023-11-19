@@ -19,9 +19,9 @@ echo -e "${BLUE}$divider${NC}"
 
 # Set variables
 script_name="log_simulator.py"
+service_name="log_simulator.service"
+config_name="config.ini"
 source_path="../src"
-source_path_to_python_script="$source_path/$script_name"
-source_path_to_service_file="log_simulator.service"
 destination_path_to_log_simulator="/opt/log_simulator"
 destination_path_to_service_file="/etc/systemd/system/log_simulator.service"
 required_minimum_python_version="3.8"
@@ -78,9 +78,20 @@ display_help() {
     exit 1
 }
 
+# Check file or directory exists function.
+check_file_or_directory_exists() {
+    local file_or_directory=$1
+    if [ -f "$file_or_directory" ] || [ -d "$file_or_directory" ]; then
+        return 0
+    else
+        echo -e "${YELLOW}File or directory not found: $file_or_directory${NC}"
+        return 1
+    fi
+}
+
 # Check if apt-get is installed function
 check_apt_get() {
-    echo "Checking apt-get"
+    echo "${NC}Checking apt-get${NC}"
     if ! command -v apt-get &> /dev/null
     then
         echo -e "${RED}This script requires apt-get but it's not installed. Are you sure you're running a Debian-based distribution?${NC}" 1>&2
@@ -97,7 +108,7 @@ is_float() {
 
 # Check if Python is installed function and if it is the correct minimum version
 check_python() {
-    echo "Checking Python"
+    echo "${NC}Checking Python${NC}"
     if ! command -v python3 &> /dev/null
     then
         echo -e "${RED}Python3 is not installed${NC}" 1>&2
@@ -124,6 +135,14 @@ check_python() {
 
 # Make the Python script executable function
 make_script_executable() {
+    echo -e "${NC}Making the Python script executable${NC}"
+    
+    check_file_or_directory_exists "$source_path_to_python_script"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}File or directory does not exist: $source_path_to_python_script${NC}" 1>&2
+        exit 1
+    fi
+
     chmod +x "$source_path_to_python_script"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to make Python script executable${NC}" 1>&2
@@ -131,36 +150,39 @@ make_script_executable() {
     fi
 }
 
-# Copy the Python script files function
+# Create a copy files function that accepts a source and destination path
 copy_files() {
-    if ! cmp -s "$source_path_to_python_script" "$destination_path_to_log_simulator"; then
-        echo -e "${NC}Copying contents of $source_path_to_python_script to $destination_path_to_log_simulator${NC}"
-        
-        # Create the directory if it does not exist
-        if [ ! -d "$destination_path_to_log_simulator" ]; then
-            sudo mkdir -p "$destination_path_to_log_simulator"
-        fi
-
-        sudo cp "$source_path_to_python_script" "$destination_path_to_log_simulator"        
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}Failed to copy the files${NC}" 1>&2
-            exit 1
-        else
-            echo -e "${GREEN}Successfully copied the files${NC}"
-        fi
+    local source_path=$1
+    local destination_path=$2
+    echo -e "${NC}Copying $source_path to $destination_path${NC}"
+    sudo cp "$source_path" "$destination_path"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to copy file${NC}" 1>&2
+        exit 1
+    else
+        echo -e "${GREEN}Successfully copied file${NC}"
     fi
 }
 
-# Copy the service file function
-copy_service_file() {
-    echo -e "${NC}Copying $source_path_to_service_file to $destination_path_to_service_file${NC}"
-    sudo cp "$source_path_to_service_file" "$destination_path_to_service_file"
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to copy service file${NC}" 1>&2
-        exit 1
-    else
-        echo -e "${GREEN}Successfully copied service file${NC}"
-    fi
+# Copy script files
+copy_files() {
+    declare -A files_to_copy=(
+        ["$source_path/$script_name"]="$destination_path_to_log_simulator/$script_name"
+        ["$source_path/$config_name"]="$destination_path_to_log_simulator/$config_name"
+    )
+    for source_path in "${!files_to_copy[@]}"; do
+        copy_files "$source_path" "${files_to_copy[$source_path]}"
+    done
+}
+
+# Copy service files
+copy_service_files() {
+    declare -A files_to_copy=(
+        ["$source_path_to_service_file"]="$destination_path_to_service_file"
+    )
+    for source_path in "${!files_to_copy[@]}"; do
+        copy_files "$source_path" "${files_to_copy[$source_path]}"
+    done
 }
 
 # Remove the service file function
@@ -269,7 +291,6 @@ main() {
         make_script_executable
         copy_files
         if $install_as_service; then
-            copy_service_file
             reload_systemd
             start_service
             enable_service
@@ -278,6 +299,7 @@ main() {
     else
         # Check if the service file exists
         if [ -f "$destination_path_to_service_file" ]; then
+            copy_service_files
             stop_service
             disable_service
             remove_service_file
