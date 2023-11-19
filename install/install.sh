@@ -103,7 +103,7 @@ check_python() {
         echo -e "${RED}Python3 is not installed${NC}" 1>&2
         return 0
     else
-        python_version=$(python3 -V 2>&1 | grep -Po '(?<=Python )(.+)')
+        python_version=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
         if ! is_float "$python_version"; then
             echo "Error: python_version is not a valid floating point number"
             exit 1
