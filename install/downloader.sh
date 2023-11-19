@@ -60,12 +60,6 @@ else
     echo -e "${GREEN}install.sh script is now executable${NC}" 1>&2
 fi
 
-# Check if the user is root, if they are, run the script. Provide messages for both states.
-if [[ $EUID -ne 0 ]]; then
-   echo -e "${YELLOW}This script must be run as root${NC}" 1>&2
-   echo -e "${YELLOW}Run the 'sudo ./install.sh' to run just the installer.${NC}" 1>&2
-   exit 1
-else
-    echo -e "${GREEN}Running Install Script${NC}" 1>&2
-    sudo ./install.sh
-fi
+
+echo -e "${YELLOW}This script must be run as root${NC}" 1>&2
+echo -e "${YELLOW}Run the 'sudo ./install.sh' to run just the installer.${NC}" 1>&2
