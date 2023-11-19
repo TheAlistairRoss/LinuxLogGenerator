@@ -88,6 +88,13 @@ check_apt_get() {
     fi
 }
 
+# Function to check if a string is a valid floating point number
+is_float() {
+    local num=$1
+    [[ $num =~ ^[+-]?[0-9]*\.?[0-9]+([eE][+-]?[0-9]+)?$ ]]
+    return $?
+}
+
 # Check if Python is installed function and if it is the correct minimum version
 check_python() {
     echo "Checking Python"
@@ -97,6 +104,14 @@ check_python() {
         return 0
     else
         python_version=$(python3 -V 2>&1 | grep -Po '(?<=Python )(.+)')
+        if ! is_float "$python_version"; then
+            echo "Error: python_version is not a valid floating point number"
+            exit 1
+        fi
+        if ! is_float "$required_minimum_python_version"; then
+            echo "Error: required_minimum_python_version is not a valid floating point number"
+            exit 1
+        fi
         if [ $(echo "$python_version >= $required_minimum_python_version" | bc -l) -ne 1 ]; then
             echo -e "${RED}Python3 version $required_minimum_python_version or greater is required${NC}" 1>&2
             return 0
@@ -171,7 +186,7 @@ make_script_executable() {
 copy_files() {
     if ! cmp -s "$source_path_to_python_script" "$destination_path_to_log_simulator"; then
         echo -e "${NC}Copying contents of $source_path_to_python_script to $destination_path_to_log_simulator${NC}"
-        sudo cp -r "$source_path_to_python_script/." "$destination_path_to_log_simulator"
+        sudo cp "$source_path_to_python_script" "$destination_path_to_log_simulator"        
         if [ $? -ne 0 ]; then
             echo -e "${RED}Failed to copy the files${NC}" 1>&2
             exit 1
