@@ -122,57 +122,6 @@ check_python() {
     fi
 }
 
-# Install Python function
-install_python() {
-    echo "Checking Python"
-    if check_python; then
-        if $unattended; then
-            # Update package lists
-            sudo apt-get update -y
-            if [ $? -ne 0 ]; then
-                echo -e "${RED}Failed to update package lists${NC}" 1>&2
-                exit 1
-            else
-                echo -e "${GREEN}Updated package lists${NC}"
-            fi
-
-            # Install Python3 and pip3 without asking for confirmation
-            echo "Installing python3"
-            sudo apt-get install -y python3 python3-pip
-            if [ $? -ne 0 ]; then
-                echo -e "${RED}Failed to install Python3 and pip3${NC}" 1>&2
-                exit 1
-            else
-                echo -e "${GREEN}Python3 installed${NC}"
-            fi
-        else
-            # Update package lists
-            sudo apt-get update
-            if [ $? -ne 0 ]; then
-                echo -e "${RED}Failed to update package lists${NC}" 1>&2
-                exit 1
-            else
-                echo -e "${GREEN}Updated package lists${NC}"
-            fi
-
-            # Ask for confirmation before installing Python3 and pip3
-            read -p "Python3 is not installed or the version is less than the required. Would you like to install it now? (y/n) " -n 1 -r
-            echo
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                sudo apt-get install -y python3 python3-pip
-                if [ $? -ne 0 ]; then
-                    echo -e "${RED}Failed to install Python3 and pip3${NC}" 1>&2
-                    exit 1
-                else
-                    echo -e "${GREEN}Python3 installed${NC}"
-                fi
-            fi
-        fi
-    else
-        echo -e "${GREEN}Python already installed${NC}"
-    fi
-}
-
 # Make the Python script executable function
 make_script_executable() {
     chmod +x "$source_path_to_python_script"
@@ -316,7 +265,7 @@ main() {
     if ! $uninstall; then
         echo -e "${BLUE}Installing Linux Log Generator${NC}"
         check_apt_get
-        install_python
+        check_python
         make_script_executable
         copy_files
         if $install_as_service; then
