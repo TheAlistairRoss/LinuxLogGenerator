@@ -13,7 +13,7 @@
 You can do this using the wget command:
 
 ```bash
-wget https://raw.githubusercontent.com/TheAlistairRoss/LinuxLogGenerator/main/install/download_and_install_script.sh
+wget https://raw.githubusercontent.com/TheAlistairRoss/LinuxLogGenerator/main/install/downloader.sh
 chmod +x download_and_install_script.sh
 sudo ./download_and_install_script.sh
 ```
