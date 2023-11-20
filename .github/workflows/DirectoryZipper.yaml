@@ -6,6 +6,8 @@ on:
       - 'src/**'
       - 'install/**'
       - 'tests/**'
+      - 'downloader/**'
+      - '.github/workflows/directory-zipper.yml'
       
   workflow_dispatch:
     
