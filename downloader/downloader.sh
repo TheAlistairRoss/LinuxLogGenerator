@@ -15,6 +15,8 @@ divider=$(printf '%*s' "$len" '' | tr ' ' '-')
 # download_url
 download_url="https://github.com/TheAlistairRoss/LinuxLogGenerator/raw/main/package/LinuxLogGenerator.zip"
 
+unzip_dir="LogGenerator"
+
 # Title
 echo -e "${BLUE}$title${NC}"
 echo -e "Author: ${BLUE}@theAlistairRoss${NC}"
@@ -38,7 +40,8 @@ fi
 
 # Unzip the downloaded file
 echo -e "${YELLOW}Unzipping the downloaded file...${NC}" 1>&2
-if ! unzip LinuxLogGenerator.zip; then
+mkdir -p $unzip_dir
+if ! unzip LinuxLogGenerator.zip -d $unzip_dir; then
     echo -e "${RED}Failed to unzip the file${NC}" 1>&2
     exit 1
 else
@@ -55,7 +58,7 @@ else
 fi
 
 # Change into the install directory
-cd install
+cd $unzip_dir/install
 
 # Make the install.sh script executable
 echo -e "${YELLOW}Making the install.sh script executable...${NC}" 1>&2
