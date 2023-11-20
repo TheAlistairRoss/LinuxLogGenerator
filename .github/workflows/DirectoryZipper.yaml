@@ -48,6 +48,10 @@ jobs:
         
             echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
 
+      - name: Add build directory to Git
+        run: |
+          git add build/
+
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
