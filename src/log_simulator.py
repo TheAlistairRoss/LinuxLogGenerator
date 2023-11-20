@@ -79,6 +79,12 @@ def parse_arguments(args=None):
             print(f"Error: The facility '{args.facility}' is not supported on this system.")
             sys.exit(1)
 
+    # print all arguments
+    print("Arguments:")
+    for arg in vars(args):
+        print(f"{arg}: {getattr(args, arg)}")
+
+
     if args.events <= 0:
         print("Error: Number of events must be greater than 0.")
         sys.exit(1)
