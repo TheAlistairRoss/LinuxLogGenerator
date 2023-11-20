@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Set variables
-
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -20,6 +19,13 @@ download_url="https://github.com/TheAlistairRoss/LinuxLogGenerator/raw/main/pack
 echo -e "${BLUE}$title${NC}"
 echo -e "Author: ${BLUE}@theAlistairRoss${NC}"
 echo -e "${BLUE}$divider${NC}"
+
+# Check if unzip is installed
+if ! command -v unzip &> /dev/null; then
+    echo -e "${RED}unzip could not be found. Please install unzip and rerun the script.${NC}" 1>&2
+    echo -e "${YELLOW}Use: sudo apt-get install unzip${NC}" 1>&2
+    exit 1
+fi
 
 # Download the zip file
 echo -e "${YELLOW}Downloading the zip file...${NC}" 1>&2
