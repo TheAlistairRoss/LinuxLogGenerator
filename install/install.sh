@@ -2,14 +2,29 @@
 set -e
 set -u
 
+title="Linux Log Generator - Installer"
+author="theAlistairRoss"
+
+# Set colors
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-title="Linux Log Generator - Installer"
-author="theAlistairRoss"
+if [[ -t 1 ]]; then
+    # Output is a terminal, use color
+    RED=$(tput setaf 1)
+    GREEN=$(tput setaf 2)
+    NC=$(tput sgr0)
+else
+    # Output is not a terminal, don't use color
+    RED=""
+    GREEN=""
+    NC=""
+fi
+
+
 len=${#title}
 divider=$(printf '%*s' "$len" '' | tr ' ' '-')
 
@@ -112,20 +127,20 @@ check_python() {
     if ! command -v python3 &> /dev/null
     then
         echo -e "${RED}Python3 is not installed${NC}" 1>&2
-        return 0
+        exit 1
     else
         python_version=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
         if ! is_float "$python_version"; then
-            echo "Error: python_version is not a valid floating point number"
+            echo -e "${RED}Error: python_version is not a valid floating point number${NC}" 1>&2
             exit 1
         fi
         if ! is_float "$required_minimum_python_version"; then
-            echo "Error: required_minimum_python_version is not a valid floating point number"
+            echo -e "${RED}Error: required_minimum_python_version is not a valid floating point number${NC}" 1>&2
             exit 1
         fi
         if [ $(echo "$python_version >= $required_minimum_python_version" | bc -l) -ne 1 ]; then
             echo -e "${RED}Python3 version $required_minimum_python_version or greater is required${NC}" 1>&2
-            return 0
+            exit 1
         else
             echo -e "${GREEN}Python3 version $python_version installed${NC}"
             return 1
@@ -145,8 +160,10 @@ make_script_executable() {
 
     chmod +x "$source_path_to_python_script"
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to make Python script executable${NC}" 1>&2
+        echo -e "${RED}Failed to make script executable${NC}" 1>&2
         exit 1
+    else
+        echo -e "${GREEN}Successfully made script executable${NC}"
     fi
 }
 

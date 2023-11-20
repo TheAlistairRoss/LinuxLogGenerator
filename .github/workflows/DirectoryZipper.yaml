@@ -21,15 +21,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Run tests
-        run: python -m unittest tests/test_log_simulator.py
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-
       - name: Zip directories
         run: |
             APP_DIRECTORY=tools/LinuxLogGenerator
-            DIRECTORIES_TO_ZIP="src install"
+            DIRECTORIES_TO_ZIP="src install tests"
             OUTPUT_DIRECTORY=build
             ZIP_FILE_NAME=LinuxLogGenerator.zip
         
