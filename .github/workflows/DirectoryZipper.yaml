@@ -52,8 +52,9 @@ jobs:
         run: |
           git add package/
 
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Zip directory $DIRECTORY_TO_ZIP"
-          commit_options: "--no-verify"
+          - name: Commit changes
+          uses: stefanzweifel/git-auto-commit-action@v5
+          with:
+            commit_message: "Zip directory $DIRECTORY_TO_ZIP"
+            commit_options: "--no-verify"
+            github_token: ${{ secrets.PAT }}
