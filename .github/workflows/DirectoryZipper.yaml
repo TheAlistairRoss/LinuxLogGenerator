@@ -28,8 +28,8 @@ jobs:
 
       - name: Zip directories
         run: |
-          DIRECTORIES_TO_ZIP="$GITHUB_WORKSPACE/src $GITHUB_WORKSPACE/install $GITHUB_WORKSPACE/tests"
-          OUTPUT_DIRECTORY=release
+          DIRECTORIES_TO_ZIP="src install tests"
+          OUTPUT_DIRECTORY=package
           ZIP_FILE_NAME=LinuxLogGenerator.zip
           VERSION_FILE_NAME=version.txt
       
@@ -48,8 +48,11 @@ jobs:
           echo "New version: $VERSION"
           echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
       
-          zip -r $GITHUB_WORKSPACE/$OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP $GITHUB_WORKSPACE/$OUTPUT_DIRECTORY/$VERSION_FILE_NAME
-
+          # Change to the GitHub workspace directory
+          cd $GITHUB_WORKSPACE
+        
+          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP $OUTPUT_DIRECTORY/$VERSION_FILE_NAME      
+          
       - name: Add release directory to Git
         run: |
           git add release/
