@@ -13,7 +13,7 @@ len=${#title}
 divider=$(printf '%*s' "$len" '' | tr ' ' '-')
 
 # download_url
-download_url="https://github.com/TheAlistairRoss/LinuxLogGenerator/raw/main/package/LinuxLogGenerator.zip"
+download_url="https://github.com/TheAlistairRoss/LinuxLogGenerator/raw/main/release/LinuxLogGenerator.zip"
 
 unzip_dir="LogGenerator"
 

@@ -28,8 +28,8 @@ jobs:
 
       - name: Zip directories
         run: |
-          DIRECTORIES_TO_ZIP="src install tests"
-          OUTPUT_DIRECTORY=package
+          DIRECTORIES_TO_ZIP="$GITHUB_WORKSPACE/src $GITHUB_WORKSPACE/install $GITHUB_WORKSPACE/tests"
+          OUTPUT_DIRECTORY=release
           ZIP_FILE_NAME=LinuxLogGenerator.zip
           VERSION_FILE_NAME=version.txt
       
@@ -47,18 +47,12 @@ jobs:
           echo "Old version: $OLD_VERSION"
           echo "New version: $VERSION"
           echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
-
-          # Move to the parent directory
-          cd ..
       
           zip -r $GITHUB_WORKSPACE/$OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP $GITHUB_WORKSPACE/$OUTPUT_DIRECTORY/$VERSION_FILE_NAME
-      
-          # Move back to the original directory
-          cd $GITHUB_WORKSPACE
 
-      - name: Add package directory to Git
+      - name: Add release directory to Git
         run: |
-          git add package/
+          git add release/
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
