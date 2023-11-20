@@ -17,6 +17,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.PAT }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -57,4 +60,4 @@ jobs:
         with:
           commit_message: "Zip directory $DIRECTORY_TO_ZIP"
           commit_options: "--no-verify"
-          token: ${{ secrets.PAT }}
+          
