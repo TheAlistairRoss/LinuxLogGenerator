@@ -32,8 +32,10 @@ jobs:
           OUTPUT_DIRECTORY=release
           ZIP_FILE_NAME=LinuxLogGenerator.zip
           VERSION_FILE_NAME=version.txt
+          TEMP_DIRECTORY=temp
       
           mkdir -p $OUTPUT_DIRECTORY
+          mkdir -p $TEMP_DIRECTORY
       
           # Increment the version number
           if [ -f $OUTPUT_DIRECTORY/$VERSION_FILE_NAME ]; then
@@ -48,16 +50,17 @@ jobs:
           echo "New version: $VERSION"
           echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
       
-          # Change to the GitHub workspace directory
-          cd $GITHUB_WORKSPACE
-      
+          # Copy the directories and the version file to the temp directory
           for DIR in $DIRECTORIES_TO_ZIP; do
-            cd $DIR
-            zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME . -x "*$OUTPUT_DIRECTORY/*"
-            cd ..
+            cp -r $DIR $TEMP_DIRECTORY
           done
-          
-          zip -j -u $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
+          cp $OUTPUT_DIRECTORY/$VERSION_FILE_NAME $TEMP_DIRECTORY
+      
+          # Zip the temp directory
+          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $TEMP_DIRECTORY
+      
+          # Remove the temp directory
+          rm -rf $TEMP_DIRECTORY
 
       - name: Add release directory to Git
         run: |
