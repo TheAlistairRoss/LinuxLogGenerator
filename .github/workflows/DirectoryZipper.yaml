@@ -51,7 +51,12 @@ jobs:
           # Change to the GitHub workspace directory
           cd $GITHUB_WORKSPACE
       
-          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP -x "*$OUTPUT_DIRECTORY/*"
+          for DIR in $DIRECTORIES_TO_ZIP; do
+            cd $DIR
+            zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME . -x "*$OUTPUT_DIRECTORY/*"
+            cd ..
+          done
+          
           zip -j -u $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
 
       - name: Add release directory to Git
