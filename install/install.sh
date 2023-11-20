@@ -33,35 +33,36 @@ echo -e "Author: ${BLUE}@theAlistairRoss${NC}"
 echo -e "${BLUE}$divider${NC}"
 
 # Set variables
+
 script_name="log_simulator.py"
 service_name="log_simulator.service"
 config_name="config.ini"
-source_path="../src"
+
+script_dir=$(dirname "$0")
+source_path="$script_dir/../src"
 destination_path_to_log_simulator="/opt/log_simulator"
-destination_path_to_service_file="/etc/systemd/system/log_simulator.service"
+destination_path_to_service_file="/etc/systemd/system"
 required_minimum_python_version="3.8"
 
 # Set default values
 uninstall=false
 install_as_service=false
-unattended=false
 
 # Functions
 # Parse arguments
 parse_arguments() {
-    while getopts ":ishu" opt; do
+    while getopts ":ihu" opt; do
         case ${opt} in
             i ) 
                 install_as_service=true
-                ;;
-            s ) 
-                unattended=true
+                echo "Install as service option selected. install_as_service=$install_as_service"
                 ;;
             h ) 
                 display_help
                 ;;
             u ) 
                 uninstall=true
+                echo "Uninstall option selected. uninstall=$uninstall"
                 ;;
             \? ) 
                 echo -e "${RED}Invalid option: $OPTARG${NC}" 1>&2
@@ -73,6 +74,8 @@ parse_arguments() {
 
 # Check if script is run with sudo
 check_root() {
+    echo -e "${NC}Checking sudo${NC}" 1>&2
+
     if [[ $EUID -ne 0 ]]; then
        echo -e "${RED}This script must be run as root${NC}" 1>&2
        exit 1
@@ -82,15 +85,52 @@ check_root() {
 # Display help message
 display_help() {
     echo
-    echo "This script installs the log simulator on a Linux machine. It can be run in unattended mode or interactive mode and can install the script as a service to run on boot. It also includes the option to uninstall the script as a service."
+    echo "This script installs the log simulator on a Linux machine. It can install the script and set it to run as a service to run on boot. It also includes the option to uninstall."
     echo "Usage: $0 [option...]" >&2
     echo
     echo "   -i, --install_as_service   Install the script as a service (default = false)"
-    echo "   -s, --silent               Run the script in silent (unattended) mode"
     echo "   -h, --help                 Display this help message"
     echo "   -u, --uninstall            Uninstall the script as a service"
     echo
     exit 1
+}
+
+# function to check os and os version
+check_os() {
+    echo -e "${NC}Checking OS${NC}"
+    if [ -f /etc/os-release ]; then
+        # freedesktop.org and systemd
+        . /etc/os-release
+        os=$NAME
+        os_version=$VERSION_ID
+    elif type lsb_release >/dev/null 2>&1; then
+        # linuxbase.org
+        os=$(lsb_release -si)
+        os_version=$(lsb_release -sr)
+    elif [ -f /etc/lsb-release ]; then
+        # For some versions of Debian/Ubuntu without lsb_release command
+        . /etc/lsb-release
+        os=$DISTRIB_ID
+        os_version=$DISTRIB_RELEASE
+    elif [ -f /etc/debian_version ]; then
+        # Older Debian/Ubuntu/etc.
+        os=Debian
+        os_version=$(cat /etc/debian_version)
+    elif [ -f /etc/SuSe-release ]; then
+        # Older SuSE/etc.
+        os=SuSe
+        os_version=$(cat /etc/SuSe-release)
+    elif [ -f /etc/redhat-release ]; then
+        # Older Red Hat, CentOS, etc.
+        os=RedHat
+        os_version=$(cat /etc/redhat-release)
+    else
+        # Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+        os=$(uname -s)
+        os_version=$(uname -r)
+    fi
+    echo -e "${GREEN}OS: $os${NC}"
+    echo -e "${GREEN}OS Version: $os_version${NC}"
 }
 
 # Check file or directory exists function.
@@ -112,6 +152,7 @@ check_apt_get() {
         echo -e "${RED}This script requires apt-get but it's not installed. Are you sure you're running a Debian-based distribution?${NC}" 1>&2
         exit 1
     fi
+    echo -e "${GREEN}apt-get is installed${NC}"
 }
 
 # Function to check if a string is a valid floating point number
@@ -143,7 +184,7 @@ check_python() {
             exit 1
         else
             echo -e "${GREEN}Python3 version $python_version installed${NC}"
-            return 1
+            return 0
         fi
     fi
 }
@@ -152,18 +193,33 @@ check_python() {
 make_script_executable() {
     echo -e "${NC}Making the Python script executable${NC}"
     
-    check_file_or_directory_exists "$source_path_to_python_script"
+    check_file_or_directory_exists "$source_path/$script_name"
     if [ $? -ne 0 ]; then
-        echo -e "${RED}File or directory does not exist: $source_path_to_python_script${NC}" 1>&2
+        echo -e "${RED}File or directory does not exist: $source_path/$script_name${NC}" 1>&2
         exit 1
     fi
 
-    chmod +x "$source_path_to_python_script"
+    chmod +x "$source_path/$script_name"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to make script executable${NC}" 1>&2
         exit 1
     else
         echo -e "${GREEN}Successfully made script executable${NC}"
+    fi
+}
+
+# Check if a directory exists from a file path and if it doesn't create it function
+check_directory_exists_and_create() {
+    local file_path=$1
+    if [ ! -d "$(dirname "$file_path")" ]; then
+        echo -e "${NC}Creating directory $(dirname "$file_path")${NC}"
+        mkdir -p "$(dirname "$file_path")"
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Failed to create directory $(dirname "$file_path")${NC}" 1>&2
+            exit 1
+        else
+            echo -e "${GREEN}Successfully created directory $(dirname "$file_path")${NC}"
+        fi
     fi
 }
 
@@ -182,12 +238,13 @@ copy_files() {
 }
 
 # Copy script files
-copy_files() {
+copy_script_files() {
     declare -A files_to_copy=(
         ["$source_path/$script_name"]="$destination_path_to_log_simulator/$script_name"
         ["$source_path/$config_name"]="$destination_path_to_log_simulator/$config_name"
     )
     for source_path in "${!files_to_copy[@]}"; do
+        check_directory_exists_and_create "${files_to_copy[$source_path]}"
         copy_files "$source_path" "${files_to_copy[$source_path]}"
     done
 }
@@ -195,7 +252,7 @@ copy_files() {
 # Copy service files
 copy_service_files() {
     declare -A files_to_copy=(
-        ["$source_path_to_service_file"]="$destination_path_to_service_file"
+        ["$source_path/$service_name"]="$destination_path_to_service_file/$service_name"
     )
     for source_path in "${!files_to_copy[@]}"; do
         copy_files "$source_path" "${files_to_copy[$source_path]}"
@@ -306,8 +363,9 @@ main() {
         check_apt_get
         check_python
         make_script_executable
-        copy_files
+        copy_script_files
         if $install_as_service; then
+            copy_service_files
             reload_systemd
             start_service
             enable_service
@@ -316,7 +374,6 @@ main() {
     else
         # Check if the service file exists
         if [ -f "$destination_path_to_service_file" ]; then
-            copy_service_files
             stop_service
             disable_service
             remove_service_file
@@ -328,4 +385,4 @@ main() {
 }
 
 # Run main function
-main
+main "$@"
