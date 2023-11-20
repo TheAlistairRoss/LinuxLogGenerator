@@ -35,11 +35,7 @@ jobs:
       
           mkdir -p $OUTPUT_DIRECTORY
       
-          for dir in $DIRECTORIES_TO_ZIP; do
-            cd $dir
-            zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
-            cd -
-          done
+          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP
       
           # Increment the version number
           if [ -f $OUTPUT_DIRECTORY/$VERSION_FILE_NAME ]; then
