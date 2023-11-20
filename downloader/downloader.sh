@@ -71,4 +71,4 @@ fi
 
 
 echo -e "${YELLOW}This script must be run as root${NC}" 1>&2
-echo -e "${YELLOW}Run the 'sudo ./install/install.sh' to run just the installer.${NC}" 1>&2
+echo -e "${YELLOW}Run the 'sudo .$unzip_dir/install/install.sh' to run just the installer.${NC}" 1>&2

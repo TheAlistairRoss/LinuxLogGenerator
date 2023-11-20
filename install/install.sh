@@ -95,43 +95,6 @@ display_help() {
     exit 1
 }
 
-# function to check os and os version
-check_os() {
-    echo -e "${NC}Checking OS${NC}"
-    if [ -f /etc/os-release ]; then
-        # freedesktop.org and systemd
-        . /etc/os-release
-        os=$NAME
-        os_version=$VERSION_ID
-    elif type lsb_release >/dev/null 2>&1; then
-        # linuxbase.org
-        os=$(lsb_release -si)
-        os_version=$(lsb_release -sr)
-    elif [ -f /etc/lsb-release ]; then
-        # For some versions of Debian/Ubuntu without lsb_release command
-        . /etc/lsb-release
-        os=$DISTRIB_ID
-        os_version=$DISTRIB_RELEASE
-    elif [ -f /etc/debian_version ]; then
-        # Older Debian/Ubuntu/etc.
-        os=Debian
-        os_version=$(cat /etc/debian_version)
-    elif [ -f /etc/SuSe-release ]; then
-        # Older SuSE/etc.
-        os=SuSe
-        os_version=$(cat /etc/SuSe-release)
-    elif [ -f /etc/redhat-release ]; then
-        # Older Red Hat, CentOS, etc.
-        os=RedHat
-        os_version=$(cat /etc/redhat-release)
-    else
-        # Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
-        os=$(uname -s)
-        os_version=$(uname -r)
-    fi
-    echo -e "${GREEN}OS: $os${NC}"
-    echo -e "${GREEN}OS Version: $os_version${NC}"
-}
 
 # Check file or directory exists function.
 check_file_or_directory_exists() {
@@ -243,9 +206,9 @@ copy_script_files() {
         ["$source_path/$script_name"]="$destination_path_to_log_simulator/$script_name"
         ["$source_path/$config_name"]="$destination_path_to_log_simulator/$config_name"
     )
-    for source_path in "${!files_to_copy[@]}"; do
-        check_directory_exists_and_create "${files_to_copy[$source_path]}"
-        copy_files "$source_path" "${files_to_copy[$source_path]}"
+    for src_path in "${!files_to_copy[@]}"; do
+        check_directory_exists_and_create "${files_to_copy[$src_path]}"
+        copy_files "$src_path" "${files_to_copy[$src_path]}"
     done
 }
 
@@ -254,8 +217,8 @@ copy_service_files() {
     declare -A files_to_copy=(
         ["$source_path/$service_name"]="$destination_path_to_service_file/$service_name"
     )
-    for source_path in "${!files_to_copy[@]}"; do
-        copy_files "$source_path" "${files_to_copy[$source_path]}"
+    for src_path in "${!files_to_copy[@]}"; do
+        copy_files "$src_path" "${files_to_copy[$src_path]}"
     done
 }
 
