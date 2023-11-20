@@ -32,18 +32,10 @@ jobs:
           OUTPUT_DIRECTORY=release
           ZIP_FILE_NAME=LinuxLogGenerator.zip
           VERSION_FILE_NAME=version.txt
-          TEMP_DIRECTORY=temp
       
           mkdir -p $OUTPUT_DIRECTORY
-          mkdir -p $TEMP_DIRECTORY
-
-          # Copy the directories to the temp directory
-          for DIRECTORY_TO_ZIP in $DIRECTORIES_TO_ZIP; do
-            echo "Copying $DIRECTORY_TO_ZIP to $TEMP_DIRECTORY"
-            cp -r $DIRECTORY_TO_ZIP $TEMP_DIRECTORY
-          done
       
-          # Increment the version number.
+          # Increment the version number
           if [ -f $OUTPUT_DIRECTORY/$VERSION_FILE_NAME ]; then
             OLD_VERSION=$(cat $OUTPUT_DIRECTORY/$VERSION_FILE_NAME | cut -d'=' -f2)
             VERSION=$((OLD_VERSION + 1))
@@ -55,25 +47,13 @@ jobs:
           echo "Old version: $OLD_VERSION"
           echo "New version: $VERSION"
           echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
+      
+          # Change to the GitHub workspace directory
+          cd $GITHUB_WORKSPACE
+      
+          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP -x "*$OUTPUT_DIRECTORY/*"
+          zip -j -u $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
 
-          # Zip the version file to release/linuxloggenerator.zip
-          echo "Zipping $VERSION_FILE_NAME to $OUTPUT_DIRECTORY/$ZIP_FILE_NAME"
-          cd $OUTPUT_DIRECTORY
-          zip -r $ZIP_FILE_NAME $VERSION_FILE_NAME
-          cd ..
-
-
-          # Move files from temp directory to zip directory using ZIP -r
-          for DIRECTORY_TO_ZIP in $DIRECTORIES_TO_ZIP; do
-            echo "Zipping $DIRECTORY_TO_ZIP to $OUTPUT_DIRECTORY/$ZIP_FILE_NAME"
-            cd $TEMP_DIRECTORY
-            zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORY_TO_ZIP
-            cd ..
-          done
-
-          # Remove the temp directory
-          rm -rf $TEMP_DIRECTORY
-          
 
       - name: Add release directory to Git
         run: |
