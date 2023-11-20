@@ -29,7 +29,7 @@ jobs:
       - name: Zip directories
         run: |
           DIRECTORIES_TO_ZIP="src install tests"
-          OUTPUT_DIRECTORY=package
+          OUTPUT_DIRECTORY=release
           ZIP_FILE_NAME=LinuxLogGenerator.zip
           VERSION_FILE_NAME=version.txt
       
@@ -50,9 +50,10 @@ jobs:
       
           # Change to the GitHub workspace directory
           cd $GITHUB_WORKSPACE
-        
-          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP $OUTPUT_DIRECTORY/$VERSION_FILE_NAME      
-          
+      
+          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP -x "*$OUTPUT_DIRECTORY/*"
+          zip -j -u $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
+
       - name: Add release directory to Git
         run: |
           git add release/
