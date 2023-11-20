@@ -23,16 +23,15 @@ jobs:
 
       - name: Zip directories
         run: |
-            APP_DIRECTORY=tools/LinuxLogGenerator
             DIRECTORIES_TO_ZIP="src install tests"
             OUTPUT_DIRECTORY=build
             ZIP_FILE_NAME=LinuxLogGenerator.zip
         
-            mkdir -p $APP_DIRECTORY/$OUTPUT_DIRECTORY
+            mkdir -p $OUTPUT_DIRECTORY
         
             for dir in $DIRECTORIES_TO_ZIP; do
-              cd $APP_DIRECTORY/$dir
-              zip -r ../../$APP_DIRECTORY/$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
+              cd $dir
+              zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
               cd -
             done
 
