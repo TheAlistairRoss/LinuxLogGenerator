@@ -35,11 +35,9 @@ jobs:
       
           mkdir -p $OUTPUT_DIRECTORY
       
-          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP
-      
           # Increment the version number
           if [ -f $OUTPUT_DIRECTORY/$VERSION_FILE_NAME ]; then
-            OLD_VERSION=$(cat $OUTPUT_DIRECTORY/$VERSION_FILE_NAME)
+            OLD_VERSION=$(cat $OUTPUT_DIRECTORY/$VERSION_FILE_NAME | cut -d'=' -f2)
             VERSION=$((OLD_VERSION + 1))
           else
             OLD_VERSION="None"
@@ -48,7 +46,15 @@ jobs:
       
           echo "Old version: $OLD_VERSION"
           echo "New version: $VERSION"
-          echo $VERSION > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
+          echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
+
+          # Move to the parent directory
+          cd ..
+      
+          zip -r $GITHUB_WORKSPACE/$OUTPUT_DIRECTORY/$ZIP_FILE_NAME $DIRECTORIES_TO_ZIP $GITHUB_WORKSPACE/$OUTPUT_DIRECTORY/$VERSION_FILE_NAME
+      
+          # Move back to the original directory
+          cd $GITHUB_WORKSPACE
 
       - name: Add package directory to Git
         run: |
