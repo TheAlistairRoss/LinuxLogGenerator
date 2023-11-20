@@ -272,8 +272,8 @@ def generate_logs(format, facility, events, rate, level, runtime):
 
 def main():
     args = parse_arguments()
-    logger = configure_logger(args.level, args.facility, args.format)
-    generate_logs(logger, args.format, args.events, args.rate, args.level, args.runtime)
+    configure_logger(args.level, args.facility, args.format)
+    generate_logs(args.format, args.facility, args.events, args.rate, args.level, args.runtime)
 
 
 if __name__ == "__main__":
