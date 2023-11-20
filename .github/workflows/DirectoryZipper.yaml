@@ -28,6 +28,7 @@ jobs:
             DIRECTORIES_TO_ZIP="src install tests"
             OUTPUT_DIRECTORY=build
             ZIP_FILE_NAME=LinuxLogGenerator.zip
+            VERSION_FILE_NAME=version.txt
         
             mkdir -p $OUTPUT_DIRECTORY
         
@@ -36,6 +37,16 @@ jobs:
               zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
               cd -
             done
+        
+            # Increment the version number
+            if [ -f $VERSION_FILE_NAME ]; then
+              VERSION=$(cat $VERSION_FILE_NAME)
+              VERSION=$((VERSION + 1))
+            else
+              VERSION=1
+            fi
+        
+            echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
