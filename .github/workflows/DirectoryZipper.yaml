@@ -36,8 +36,14 @@ jobs:
       
           mkdir -p $OUTPUT_DIRECTORY
           mkdir -p $TEMP_DIRECTORY
+
+          # Copy the directories to the temp directory
+          for DIRECTORY_TO_ZIP in $DIRECTORIES_TO_ZIP; do
+            echo "Copying $DIRECTORY_TO_ZIP to $TEMP_DIRECTORY"
+            cp -r $DIRECTORY_TO_ZIP $TEMP_DIRECTORY
+          done
       
-          # Increment the version number
+          # Increment the version number.
           if [ -f $OUTPUT_DIRECTORY/$VERSION_FILE_NAME ]; then
             OLD_VERSION=$(cat $OUTPUT_DIRECTORY/$VERSION_FILE_NAME | cut -d'=' -f2)
             VERSION=$((OLD_VERSION + 1))
@@ -49,18 +55,15 @@ jobs:
           echo "Old version: $OLD_VERSION"
           echo "New version: $VERSION"
           echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
-      
-          # Copy the directories and the version file to the temp directory
-          for DIR in $DIRECTORIES_TO_ZIP; do
-            cp -r $DIR $TEMP_DIRECTORY
-          done
           cp $OUTPUT_DIRECTORY/$VERSION_FILE_NAME $TEMP_DIRECTORY
-      
-          # Zip the temp directory
-          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $TEMP_DIRECTORY
-      
-          # Remove the temp directory
-          rm -rf $TEMP_DIRECTORY
+
+          # Create an empty zip directory
+          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME $OUTPUT_DIRECTORY
+
+          # Add the contents of the temp directory to the zip file
+          cd $TEMP_DIRECTORY
+          zip -r $OUTPUT_DIRECTORY/$ZIP_FILE_NAME *
+          cd ..
 
       - name: Add release directory to Git
         run: |
