@@ -40,8 +40,8 @@ import sys
 import random
 import configparser
 
-if sys.version_info < (3, 10):
-    print("This script requires Python 3.10 or later")
+if sys.version_info < (3, 6):
+    print("This script requires Python 3.6 or later")
     sys.exit(1)
 
 valid_facilities = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
