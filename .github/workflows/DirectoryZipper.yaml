@@ -28,28 +28,31 @@ jobs:
 
       - name: Zip directories
         run: |
-            DIRECTORIES_TO_ZIP="src install tests"
-            OUTPUT_DIRECTORY=package
-            ZIP_FILE_NAME=LinuxLogGenerator.zip
-            VERSION_FILE_NAME=version.txt
-        
-            mkdir -p $OUTPUT_DIRECTORY
-        
-            for dir in $DIRECTORIES_TO_ZIP; do
-              cd $dir
-              zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
-              cd -
-            done
-        
-            # Increment the version number
-            if [ -f $VERSION_FILE_NAME ]; then
-              VERSION=$(cat $VERSION_FILE_NAME)
-              VERSION=$((VERSION + 1))
-            else
-              VERSION=1
-            fi
-        
-            echo "version=$VERSION" > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
+          DIRECTORIES_TO_ZIP="src install tests"
+          OUTPUT_DIRECTORY=package
+          ZIP_FILE_NAME=LinuxLogGenerator.zip
+          VERSION_FILE_NAME=version.txt
+      
+          mkdir -p $OUTPUT_DIRECTORY
+      
+          for dir in $DIRECTORIES_TO_ZIP; do
+            cd $dir
+            zip -r ../$OUTPUT_DIRECTORY/$ZIP_FILE_NAME .
+            cd -
+          done
+      
+          # Increment the version number
+          if [ -f $OUTPUT_DIRECTORY/$VERSION_FILE_NAME ]; then
+            OLD_VERSION=$(cat $OUTPUT_DIRECTORY/$VERSION_FILE_NAME)
+            VERSION=$((OLD_VERSION + 1))
+          else
+            OLD_VERSION="None"
+            VERSION=1
+          fi
+      
+          echo "Old version: $OLD_VERSION"
+          echo "New version: $VERSION"
+          echo $VERSION > $OUTPUT_DIRECTORY/$VERSION_FILE_NAME
 
       - name: Add package directory to Git
         run: |
