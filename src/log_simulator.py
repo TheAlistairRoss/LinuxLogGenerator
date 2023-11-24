@@ -297,7 +297,8 @@ def generate_logs(format, facility, events, rate, level, runtime):
     logger = logging.getLogger(__name__)
 
     start_time = time.time()
-    for i in range(events):
+    event_count = 0
+    while True:
         # Check if runtime has been exceeded
         if runtime > 0 and time.time() - start_time >= runtime:
             break
@@ -305,14 +306,15 @@ def generate_logs(format, facility, events, rate, level, runtime):
         log_start_time = time.time()
 
         try:
-            log_data = generate_random_log_data(i)
+            log_data = generate_random_log_data(event_count)
+            event_count += 1
         except ValueError as e:
             logging.error(f"Failed to generate log data: {e}")
             print(f"Failed to generate log data: {e}")
             return
 
         log_level = getattr(logging, level.upper(), None)
-        
+
         try:
             log_message = generate_log_message(format, log_data, level, facility)
             logger.log(log_level, log_message)
