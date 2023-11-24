@@ -159,8 +159,8 @@ def parse_arguments(args=None):
         print(f"{arg}: {getattr(args, arg)}")
 
 
-    if args.events <= 0:
-        print("Error: Number of events must be greater than 0.")
+    if args.events < 0:
+        print("Error: Number of events must be greater than or equal to 0.")
         sys.exit(1)
 
     if args.rate <= 0:
@@ -282,8 +282,8 @@ def generate_log_message(format, log_data, level, facility):
 
 def generate_logs(format, facility, events, rate, level, runtime):
     # Validate arguments
-    if not isinstance(events, int) or events <= 0:
-        raise ValueError("events must be a positive integer")
+    if not isinstance(events, int) or events < 0:
+        raise ValueError("events must be a non-negative integer")
     if not isinstance(rate, (int, float)) or rate <= 0:
         raise ValueError("rate must be a positive number")
     if level.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
@@ -298,7 +298,7 @@ def generate_logs(format, facility, events, rate, level, runtime):
 
     start_time = time.time()
     event_count = 0
-    while True:
+    while events == 0 or event_count < events:
         # Check if runtime has been exceeded
         if runtime > 0 and time.time() - start_time >= runtime:
             break
