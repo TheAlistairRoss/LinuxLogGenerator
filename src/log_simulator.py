@@ -39,6 +39,8 @@ import argparse
 import sys
 import random
 import configparser
+import datetime
+import socket
 
 if sys.version_info < (3, 6):
     print("This script requires Python 3.6 or later")
@@ -47,6 +49,49 @@ if sys.version_info < (3, 6):
 valid_facilities = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
 valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
+class RFC5424Formatter(logging.Formatter):
+    def format(self, record):
+        # Get the base message
+        msg = super().format(record)
+
+        # Add the syslog priority
+        priority = '<%d>' % self.map_priority(record.levelname)
+
+        # Add the version
+        version = '1'
+
+        # Add the timestamp
+        timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
+
+        # Add the hostname
+        hostname = socket.gethostname()
+
+        # Add the app name
+        app_name = record.name
+
+        # Add the process ID
+        procid = '-'
+
+        # Add the message ID
+        msgid = '-'
+
+        # Add the structured data
+        sd = '-'
+
+        # Combine everything
+        return f'{priority}{version} {timestamp} {hostname} {app_name} {procid} {msgid} {sd} {msg}'
+
+    def map_priority(self, levelname):
+        # Map the log level to a syslog priority value
+        levels = {
+            'CRITICAL': 2,
+            'ERROR': 3,
+            'WARNING': 4,
+            'INFO': 6,
+            'DEBUG': 7,
+        }
+        return levels.get(levelname, 6)  # Default to 'INFO' if unknown level
+    
 def check_facility(facility):
     return facility in valid_facilities
 
@@ -108,7 +153,11 @@ def configure_logger(level, output, format):
     # Set the output format to either 'cef' or 'syslog'
     if format not in ['cef', 'syslog']:
         raise ValueError("format must be either 'cef' or 'syslog'")
-    formatter = logging.Formatter(get_log_format(format))
+    
+    if format == 'cef':
+        formatter = RFC5424Formatter()
+    else:
+        formatter = logging.Formatter(get_log_format(format))
 
     # Check if output is a valid syslog facility or 'console'
     if output == 'console':
@@ -173,7 +222,6 @@ def generate_random_log_data(i):
             'dst': f'192.168.0.{random.randint(1, 255)}',
             'spt': random.randint(1024, 65535),
             'dpt': 22,
-            'request': f'/auth?user={user}&password=********',
             'response': response,
             'user': user,
             'outcome': response,
@@ -194,10 +242,11 @@ def generate_log_message(format, log_data, level, facility):
         raise ValueError(f"Invalid logging level '{level}'")
 
     if format == 'syslog':
-        return f"<{valid_facilities.index(facility) * 8 + level_number}> {log_data['device_vendor']} {log_data['device_event_class_id']} {log_data['extension']['user']} {log_data['extension']['outcome']} {log_data['extension']['reason']}"
+        extension = ' '.join(f'{k}={v}' for k, v in log_data['extension'].items())
+        return f"{log_data['device_vendor']} {level} {log_data['extension']['act']} {log_data['device_event_class_id']} {log_data['extension']['user']} {log_data['extension']['outcome']} {log_data['extension']['reason']} {extension}"
     elif format == 'cef':
         extension = ' '.join(f'{k}={v}' for k, v in log_data['extension'].items())
-        return f"CEF:0|{log_data['device_vendor']}|{log_data['device_product']}|{log_data['device_version']}|{log_data['device_event_class_id']}|{log_data['name']}|{log_data['severity']}|{extension}"
+        return f"CEF:0|{log_data['device_vendor']}|{log_data['device_product']}|{log_data['device_version']}|{log_data['device_event_class_id']}|{log_data['name']}|{level_number}|{extension}"
     else:
         raise ValueError(f"Invalid format value '{format}'. Format must be either 'syslog' or 'cef'.")
 

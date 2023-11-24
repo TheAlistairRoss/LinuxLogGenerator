@@ -94,7 +94,7 @@ display_help() {
     echo
     exit 1
 }
-
+ 
 
 # Check file or directory exists function.
 check_file_or_directory_exists() {
