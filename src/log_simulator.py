@@ -323,7 +323,7 @@ def generate_logs(format, facility, events, rate, level, runtime):
             print(str(e))
             return
 
-        time.sleep(max(0, rate - (time.time() - log_start_time)))
+        time.sleep(max(0, 1/rate - (time.time() - log_start_time)))
 
 
 def main():
