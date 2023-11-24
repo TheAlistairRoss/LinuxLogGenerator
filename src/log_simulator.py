@@ -7,6 +7,8 @@ This script can be run on any Linux system with Python 3.10 or later installed. 
     - sys
     - random
     - configparser
+    - datetime
+    - socket
 
 It can be installed as a systemd service by running the following commands:
     /install/install.sh
@@ -91,9 +93,36 @@ class RFC5424Formatter(logging.Formatter):
             'DEBUG': 7,
         }
         return levels.get(levelname, 6)  # Default to 'INFO' if unknown level
-    
+
+class CEFLogFormatter(logging.Formatter):
+    def format(self, record):
+        # Get the base message
+        msg = super().format(record)
+
+        # Add the timestamp
+        timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
+
+        # Add the hostname
+        hostname = socket.gethostname()
+
+        # Add the app name
+        app_name = record.name
+
+        # Add the process ID
+        procid = '-'
+
+        # Add the message ID
+        msgid = '-'
+
+        # Add the structured data
+        sd = '-'
+
+        # Combine everything
+        return f'CEF:0|{hostname}|{app_name}|1.0|{msgid}|{msg}|{record.levelno}|{sd}'
+        
 def check_facility(facility):
-    return facility in valid_facilities
+    updated_valid_facilities = valid_facilities + ["console"]
+    return facility in updated_valid_facilities
 
 def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description="Generate logs in either syslog or CEF format.")
@@ -154,10 +183,10 @@ def configure_logger(level, output, format):
     if format not in ['cef', 'syslog']:
         raise ValueError("format must be either 'cef' or 'syslog'")
     
-    if format == 'cef':
+    if format == 'syslog':
         formatter = RFC5424Formatter()
-    else:
-        formatter = logging.Formatter(get_log_format(format))
+    elif format == 'cef':
+        formatter = CEFLogFormatter()
 
     # Check if output is a valid syslog facility or 'console'
     if output == 'console':
@@ -251,13 +280,6 @@ def generate_log_message(format, log_data, level, facility):
         raise ValueError(f"Invalid format value '{format}'. Format must be either 'syslog' or 'cef'.")
 
 
-def get_log_format(format):
-    if format == 'cef':
-        return '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    else:
-        return '%(message)s'
-
-
 def generate_logs(format, facility, events, rate, level, runtime):
     # Validate arguments
     if not isinstance(events, int) or events <= 0:
@@ -272,26 +294,7 @@ def generate_logs(format, facility, events, rate, level, runtime):
     if facility not in ['console'] + valid_facilities:
         raise ValueError("facility must be 'console' or a valid syslog facility")
 
-    log_level = getattr(logging, level.upper(), None)
-    if log_level is None:
-        raise ValueError(f"Invalid logging level '{level}'")
-
     logger = logging.getLogger(__name__)
-    logger.setLevel(log_level)
-
-    try:
-        if facility == 'console':
-            handler = logging.StreamHandler()
-        else:
-            handler = logging.handlers.SysLogHandler(address='/dev/log', facility=facility)
-    except OSError as e:
-        raise ValueError(f"Unable to create handler: {e}")
-    handler.setLevel(log_level)
-
-    formatter = logging.Formatter(get_log_format(format))
-    handler.setFormatter(formatter)
-
-    logger.addHandler(handler)
 
     start_time = time.time()
     for i in range(events):
@@ -308,6 +311,8 @@ def generate_logs(format, facility, events, rate, level, runtime):
             print(f"Failed to generate log data: {e}")
             return
 
+        log_level = getattr(logging, level.upper(), None)
+        
         try:
             log_message = generate_log_message(format, log_data, level, facility)
             logger.log(log_level, log_message)
