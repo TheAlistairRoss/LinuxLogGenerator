@@ -31,7 +31,7 @@ fi
 
 # Download the zip file
 echo -e "${YELLOW}Downloading the zip file...${NC}" 1>&2
-if ! wget -O $download_url; then
+if ! wget -O LinuxLogGenerator.zip $download_url; then
     echo -e "${RED}Failed to download the zip file${NC}" 1>&2
     exit 1
 else
