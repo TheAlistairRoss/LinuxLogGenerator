@@ -31,7 +31,7 @@ fi
 
 # Download the zip file
 echo -e "${YELLOW}Downloading the zip file...${NC}" 1>&2
-if ! wget $download_url; then
+if ! wget -O $download_url; then
     echo -e "${RED}Failed to download the zip file${NC}" 1>&2
     exit 1
 else
@@ -41,7 +41,7 @@ fi
 # Unzip the downloaded file
 echo -e "${YELLOW}Unzipping the downloaded file...${NC}" 1>&2
 mkdir -p $unzip_dir
-if ! unzip LinuxLogGenerator.zip -d $unzip_dir; then
+if ! unzip -o LinuxLogGenerator.zip -d $unzip_dir; then
     echo -e "${RED}Failed to unzip the file${NC}" 1>&2
     exit 1
 else

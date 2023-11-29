@@ -50,22 +50,25 @@ install_as_service=false
 
 # Functions
 # Parse arguments
+# Parse arguments
 parse_arguments() {
-    while getopts ":ihu" opt; do
-        case ${opt} in
-            i ) 
+    while (( "$#" )); do
+        case "$1" in
+            -i|--install_as_service)
                 install_as_service=true
                 echo "Install as service option selected. install_as_service=$install_as_service"
+                shift
                 ;;
-            h ) 
+            -h|--help)
                 display_help
                 ;;
-            u ) 
+            -u|--uninstall)
                 uninstall=true
                 echo "Uninstall option selected. uninstall=$uninstall"
+                shift
                 ;;
-            \? ) 
-                echo -e "${RED}Invalid option: $OPTARG${NC}" 1>&2
+            *)
+                echo -e "${RED}Invalid option: $1${NC}" 1>&2
                 display_help
                 ;;
         esac
