@@ -51,6 +51,7 @@ if sys.version_info < (3, 6):
 valid_facilities = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
 valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
+
 class RFC5424Formatter(logging.Formatter):
     def format(self, record):
         # Get the base message
@@ -94,6 +95,7 @@ class RFC5424Formatter(logging.Formatter):
         }
         return levels.get(levelname, 6)  # Default to 'INFO' if unknown level
 
+
 class CEFLogFormatter(logging.Formatter):
     def format(self, record):
         # Get the base message
@@ -119,10 +121,12 @@ class CEFLogFormatter(logging.Formatter):
 
         # Combine everything
         return f'CEF:0|{hostname}|{app_name}|1.0|{msgid}|{msg}|{record.levelno}|{sd}'
-        
+
+
 def check_facility(facility):
     updated_valid_facilities = valid_facilities + ["console"]
     return facility in updated_valid_facilities
+
 
 def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description="Generate logs in either syslog or CEF format.")
@@ -141,8 +145,7 @@ def parse_arguments(args=None):
         args.format = config.get('DEFAULT', 'format', fallback=args.format)
         args.facility = config.get('DEFAULT', 'facility', fallback=args.facility)
         args.level = config.get('DEFAULT', 'level', fallback=args.level)
-        args.events_per_second = config.get('DEFAULT', 'events_per_second', fallback=args.events_per_second)
-        args.level = config.get('DEFAULT', 'level', fallback=args.level)
+        args.events_per_second = config.getint('DEFAULT', 'events_per_second', fallback=args.events_per_second)
         args.runtime = config.getint('DEFAULT', 'runtime', fallback=args.runtime)
 
     if not check_facility(args.facility):
@@ -152,11 +155,19 @@ def parse_arguments(args=None):
             print(f"Error: The facility '{args.facility}' is not supported on this system.")
             sys.exit(1)
 
-    # print all arguments
+    # Print all arguments
     print("Arguments:")
     for arg in vars(args):
         print(f"{arg}: {getattr(args, arg)}")
 
+    # Check the types of config inputs
+    if not isinstance(args.events_per_second, int):
+        print("Error: 'events_per_second' in the config file must be an integer.")
+        sys.exit(1)
+
+    if not isinstance(args.runtime, int):
+        print("Error: 'runtime' in the config file must be an integer.")
+        sys.exit(1)
 
     if args.events_per_second < 0:
         print("Error: Number of events must be greater than or equal to 0.")
