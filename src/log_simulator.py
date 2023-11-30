@@ -222,7 +222,7 @@ def format_cef_message(log_data):
 
 
 def format_syslog_message(log_data):
-    syslog_formatted_message = f"{log_data['deviceVendor']}: User='{log_data['extension']['user']}' Action='{log_data['name']}' response='{log_data['extension']['response']}'"
+    syslog_formatted_message = f"{log_data['deviceVendor']}: User='{log_data['extension']['user']}' Action='{log_data['name']}' response='{log_data['extension']['response']} reason='{log_data['extension']['reason']}'"
     return syslog_formatted_message
 
 
