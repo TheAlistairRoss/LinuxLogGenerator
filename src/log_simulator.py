@@ -110,7 +110,7 @@ def configure_logger(level, output):
     if log_level is None:
         raise ValueError(f"Invalid logging level '{level}'")
     
-    formatter = logging.Formatter('%(name)s %(levelname)s %(message)s')
+    formatter = logging.Formatter('%(name)s %(message)s')
 
     # Check if output is a valid syslog facility or 'console'
     if output == 'console':
@@ -240,6 +240,7 @@ def generate_log_message(format):
     
     #return level_number_severity, formatted_message as a tuple
     return level_number_severity, formatted_message
+
 
 def generate_logs(logger, format, facility, level, events_per_second, runtime):
     # Validate arguments
