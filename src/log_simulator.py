@@ -11,27 +11,27 @@ This script can be run on any Linux system with Python 3.10 or later installed. 
     - socket
 
 It can be installed as a systemd service by running the following commands:
-    /install/install.sh
+    /install/install.sh -i
 
 Usage:
-    python log_simulator.py [--format FORMAT] [--facility FACILITY] [--events EVENTS] [--rate RATE] [--level LEVEL] [--runtime RUNTIME]
+    python log_simulator.py [-c CONFIG] [-f FORMAT] [-F FACILITY] [-l LEVEL] [-e EVENTS PER SECOND] [-t RUNTIME]
 
 Options:
-    --format FORMAT         The logging format. Can be either 'syslog' or 'cef'. Default is 'syslog'.
-    --facility FACILITY     The logging facility. Can be one of 'auth', 'authpriv', 'cron', 'daemon', 'ftp', 'kern', 'lpr', 'mail', 'news', 'syslog', 'user', 'uucp', 'local0', 'local1', 'local2', 'local3', 'local4', 'local5', 'local6', 'local7'. Default is 'syslog'.
-    --events EVENTS         The total number of events to log. Default is 20.
-    --rate RATE             The event logging rate (seconds per event). Default is 60.
-    --level LEVEL           The logging level. Can be one of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'. Default is 'INFO'.
-    --runtime RUNTIME       The total running time in seconds. If set to 0, the script will run indefinitely. Default is 0.
+    -c, --config CONFIG                         Path to a configuration file.
+    -f, --format FORMAT                         The logging format. Can be either 'syslog' or 'cef'. Default is 'syslog'.
+    -F, --facility FACILITY                     The logging facility. Can be one of 'auth', 'authpriv', 'cron', 'daemon', 'ftp', 'kern', 'lpr', 'mail', 'news', 'syslog', 'user', 'uucp', 'local0', 'local1', 'local2', 'local3', 'local4', 'local5', 'local6', 'local7'. Default is 'syslog'.
+    -l, --level LEVEL                           The logging level. Can be one of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'. Default is 'INFO'.
+    -e, --events_per_second EVENTS PER SECOND   The total number of events to log. Default is 1.
+    -r, --runtime RUNTIME                       The total running time in seconds. If set to 0, the script will run indefinitely. Default is 0.
     
 Examples:
-    Generate 50 syslog events with a logging rate of 30 seconds per event:
-        python log_simulator.py --format syslog --events 50 --rate 30
+    Generate 50 syslog events per second, to the local0.WARNING facility/level until the script is ended:
+        python log_simulator.py --format syslog --facility local0 --WARNING --events 50
 
         <34>Oct 11 22:14:15 myhost myprogram[12345]: User 'admin' logged in
 
-    Generate CEF events with a logging rate of 10 seconds per event and a total running time of 300 seconds:
-        python log_simulator.py --format cef --rate 10 --runtime 300
+    Generate CEF events with a logging rate of 10 events per second and a total running time of 300 seconds:
+        python log_simulator.py -f cef -e 10 -r 300
 """
 
 import logging
@@ -126,13 +126,12 @@ def check_facility(facility):
 
 def parse_arguments(args=None):
     parser = argparse.ArgumentParser(description="Generate logs in either syslog or CEF format.")
-    parser.add_argument("--config", type=str, help="Path to a configuration file.")
-    parser.add_argument("--format", type=str, choices=["syslog", "cef"], default="syslog", help="The logging format. Default is 'syslog'.")
-    parser.add_argument("--facility", type=str, choices=valid_facilities, default="syslog", help="The logging facility. Default is 'syslog'.")
-    parser.add_argument("--events", type=int, default=20, help="The total number of events to log. Default is 20.")
-    parser.add_argument("--rate", type=int, default=60, help="The event logging rate (seconds per event). Default is 60.")
-    parser.add_argument("--level", type=str, choices=valid_levels, default="INFO", help="The logging level. Default is 'INFO'.")
-    parser.add_argument("--runtime", type=int, default=0, help="The total running time in seconds. If set to 0, the script will run indefinitely. Default is 0.")
+    parser.add_argument("-c", "--config", type=str, help="Path to a configuration file.")
+    parser.add_argument("-f", "--format", type=str, choices=["syslog", "cef"], default="syslog", help="The logging format. Default is 'syslog'.")
+    parser.add_argument("-F", "--facility", type=str, choices=valid_facilities, default="syslog", help="The logging facility. Default is 'syslog'.")
+    parser.add_argument("-l", "--level", type=str, choices=valid_levels, default="INFO", help="The logging level. Default is 'INFO'.")
+    parser.add_argument("-e", "--events_per_second", type=int, default=1, help="Number of events to generate per second")
+    parser.add_argument("-r", "--runtime", type=int, default=0, help="Total running time in seconds")    
     args = parser.parse_args(args)
 
     if args.config:
@@ -141,8 +140,8 @@ def parse_arguments(args=None):
 
         args.format = config.get('DEFAULT', 'format', fallback=args.format)
         args.facility = config.get('DEFAULT', 'facility', fallback=args.facility)
-        args.events = config.getint('DEFAULT', 'events', fallback=args.events)
-        args.rate = config.getint('DEFAULT', 'rate', fallback=args.rate)
+        args.level = config.get('DEFAULT', 'level', fallback=args.level)
+        args.events_per_second = config.get('DEFAULT', 'events_per_second', fallback=args.events_per_second)
         args.level = config.get('DEFAULT', 'level', fallback=args.level)
         args.runtime = config.getint('DEFAULT', 'runtime', fallback=args.runtime)
 
@@ -159,12 +158,8 @@ def parse_arguments(args=None):
         print(f"{arg}: {getattr(args, arg)}")
 
 
-    if args.events < 0:
+    if args.events_per_second < 0:
         print("Error: Number of events must be greater than or equal to 0.")
-        sys.exit(1)
-
-    if args.rate <= 0:
-        print("Error: Logging rate must be greater than 0.")
         sys.exit(1)
 
     if args.level == "DEBUG" and args.runtime == 0:
@@ -172,6 +167,7 @@ def parse_arguments(args=None):
         sys.exit(1)
 
     return args
+
 
 def configure_logger(level, output, format):
     # Check if level is a valid logging level
@@ -280,50 +276,44 @@ def generate_log_message(format, log_data, level, facility):
         raise ValueError(f"Invalid format value '{format}'. Format must be either 'syslog' or 'cef'.")
 
 
-def generate_logs(format, facility, events, rate, level, runtime):
+def generate_logs(format, facility, level, events_per_second, runtime):
     # Validate arguments
     if not isinstance(events, int) or events < 0:
         raise ValueError("events must be a non-negative integer")
-    if not isinstance(rate, (int, float)) or rate <= 0:
-        raise ValueError("rate must be a positive number")
+    if not isinstance(events_per_second, (int, float)) or events_per_second <= 0:
+        raise ValueError("events_per_second must be 0 or a positive number")
     if level.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         raise ValueError("level must be one of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'")
     if not isinstance(runtime, int) or runtime < 0:
         raise ValueError("runtime must be a non-negative integer")
-
     if facility not in ['console'] + valid_facilities:
         raise ValueError("facility must be 'console' or a valid syslog facility")
 
     logger = logging.getLogger(__name__)
 
     start_time = time.time()
-    event_count = 0
-    while events == 0 or event_count < events:
+
+    while True:
+        log_start_time = time.time()
+
+        for i in range(events_per_second):
+            log_data = generate_random_log_data(i)
+            try:
+                log_message = generate_log_message(format, log_data, level, facility)
+                logger.log(log_level, log_message)
+            except ValueError as e:
+                logging.error(str(e))
+                print(str(e))
+                return
+
         # Check if runtime has been exceeded
         if runtime > 0 and time.time() - start_time >= runtime:
             break
 
-        log_start_time = time.time()
+        elapsed_time = time.time() - log_start_time
+        sleep_time = max(0, 1/events_per_second - elapsed_time)
+        time.sleep(sleep_time)
 
-        try:
-            log_data = generate_random_log_data(event_count)
-            event_count += 1
-        except ValueError as e:
-            logging.error(f"Failed to generate log data: {e}")
-            print(f"Failed to generate log data: {e}")
-            return
-
-        log_level = getattr(logging, level.upper(), None)
-
-        try:
-            log_message = generate_log_message(format, log_data, level, facility)
-            logger.log(log_level, log_message)
-        except ValueError as e:
-            logging.error(str(e))
-            print(str(e))
-            return
-
-        time.sleep(max(0, 1/rate - (time.time() - log_start_time)))
 
 
 def main():
