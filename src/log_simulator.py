@@ -149,7 +149,8 @@ def generate_random_log_data():
     failure_reasons_map = {
         'invalid_credentials':  40,
         'expired_password':  30,
-        'account_locked': 30
+        'account_locked': 30,
+        'unknown': 30  
     }
 
     response_map = {
