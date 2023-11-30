@@ -143,12 +143,15 @@ def generate_random_log_data():
         ('failure', 'login'): (5, 40),
         ('failure', 'logout'): (6, 40),
         ('failure', 'password_change'): (7, 40),
-        ('failure', 'account_creation'): (8, 40),
-        ('failure', 'invalid_credentials'): (9, 40),
-        ('failure', 'expired_password'): (10, 30),
-        ('failure', 'account_locked'): (11, 30)
+        ('failure', 'account_creation'): (8, 40)
     }
     
+    failure_reasons_map = {
+        'invalid_credentials':  40,
+        'expired_password':  30,
+        'account_locked': 30
+    }
+
     response_map = {
         'success': 'allow',
         'failure': 'deny', 
@@ -167,6 +170,9 @@ def generate_random_log_data():
     user = random.choice(users)
 
     signatureId, level = device_event_class_id_map[(response, auth_event)]
+
+    if response == 'failure':
+        level = failure_reasons_map[reason]
 
     log_data = {
         'deviceVendor': 'Contoso',
