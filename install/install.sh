@@ -35,7 +35,7 @@ echo -e "${BLUE}$divider${NC}"
 # Set variables
 
 script_name="log_simulator.py"
-service_name="log_simulator.service"
+service_name_file="log_simulator.service"
 config_name="config.ini"
 
 script_dir=$(dirname "$0")
@@ -230,7 +230,7 @@ copy_script_files() {
 # Copy service files
 copy_service_files() {
     declare -A files_to_copy=(
-        ["$source_path/$service_name"]="$destination_path_to_service_file/$service_name"
+        ["$source_path/$service_name_file"]="$destination_path_to_service_file/$service_name_file"
     )
     for src_path in "${!files_to_copy[@]}"; do
         copy_files "$src_path" "${files_to_copy[$src_path]}"
@@ -259,6 +259,7 @@ reload_systemd() {
     fi
 }
 
+
 # Start the service function
 start_service() {
     echo -e "${NC}Starting log_simulator daemon${NC}"
@@ -268,6 +269,17 @@ start_service() {
         exit 1
     else
         echo -e "${GREEN}Successfully started daemon${NC}"
+    fi
+}
+
+# Check if the log_simulator service is already running
+check_service_running() {
+    echo -e "${NC}Checking if log_simulator service is running${NC}"
+    if sudo systemctl is-active --quiet log_simulator; then
+        systemctl restart log_simulator
+        return 0
+    else
+        start_service()
     fi
 }
 
@@ -346,7 +358,7 @@ main() {
         if $install_as_service; then
             copy_service_files
             reload_systemd
-            start_service
+            check_service_running
             enable_service
         fi
         echo -e "${GREEN}Install Complete${NC}"

@@ -268,7 +268,7 @@ def generate_logs(logger, format, facility, level, events_per_second, runtime):
 
 def main():
     args = parse_arguments()
-    logger = configure_logger(args.level, args.facility, args.format)
+    logger = configure_logger(args.level, args.facility)
     generate_logs(logger, args.format, args.facility, args.level, args.events_per_second, args.runtime)
 
 
