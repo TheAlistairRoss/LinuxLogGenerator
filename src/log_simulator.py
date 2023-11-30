@@ -9,6 +9,7 @@ This script can be run on any Linux system with Python 3.10 or later installed. 
     - configparser
     - datetime
     - socket
+    - cefevent
 
 It can be installed as a systemd service by running the following commands:
     /install/install.sh -i
@@ -41,87 +42,12 @@ import argparse
 import sys
 import random
 import configparser
-import datetime
-import socket
+from cefevent.event import CEFEvent
 
-if sys.version_info < (3, 6):
-    print("This script requires Python 3.6 or later")
-    sys.exit(1)
+script_name = "log_simulator"
 
 valid_facilities = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
 valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-
-
-class RFC5424Formatter(logging.Formatter):
-    def format(self, record):
-        # Get the base message
-        msg = super().format(record)
-
-        # Add the syslog priority
-        priority = '<%d>' % self.map_priority(record.levelname)
-
-        # Add the version
-        version = '1'
-
-        # Add the timestamp
-        timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
-
-        # Add the hostname
-        hostname = socket.gethostname()
-
-        # Add the app name
-        app_name = record.name
-
-        # Add the process ID
-        procid = '-'
-
-        # Add the message ID
-        msgid = '-'
-
-        # Add the structured data
-        sd = '-'
-
-        # Combine everything
-        return f'{priority}{version} {timestamp} {hostname} {app_name} {procid} {msgid} {sd} {msg}'
-
-    def map_priority(self, levelname):
-        # Map the log level to a syslog priority value
-        levels = {
-            'CRITICAL': 2,
-            'ERROR': 3,
-            'WARNING': 4,
-            'INFO': 6,
-            'DEBUG': 7,
-        }
-        return levels.get(levelname, 6)  # Default to 'INFO' if unknown level
-
-
-class CEFLogFormatter(logging.Formatter):
-    def format(self, record):
-        # Get the base message
-        msg = super().format(record)
-
-        # Add the timestamp
-        timestamp = datetime.datetime.utcnow().isoformat() + 'Z'
-
-        # Add the hostname
-        hostname = socket.gethostname()
-
-        # Add the app name
-        app_name = record.name
-
-        # Add the process ID
-        procid = '-'
-
-        # Add the message ID
-        msgid = '-'
-
-        # Add the structured data
-        sd = '-'
-
-        # Combine everything
-        return f'CEF:0|{hostname}|{app_name}|1.0|{msgid}|{msg}|{record.levelno}|{sd}'
-
 
 def check_facility(facility):
     updated_valid_facilities = valid_facilities + ["console"]
@@ -133,7 +59,7 @@ def parse_arguments(args=None):
     parser.add_argument("-c", "--config", type=str, help="Path to a configuration file.")
     parser.add_argument("-f", "--format", type=str, choices=["syslog", "cef"], default="syslog", help="The logging format. Default is 'syslog'.")
     parser.add_argument("-F", "--facility", type=str, choices=valid_facilities, default="syslog", help="The logging facility. Default is 'syslog'.")
-    parser.add_argument("-l", "--level", type=str, choices=valid_levels, default="INFO", help="The logging level. Default is 'INFO'.")
+    parser.add_argument("-l", "--level", type=str, choices=valid_levels, default="INFO", help="The minimum logging level that will be processed. Default is 'INFO'.")
     parser.add_argument("-e", "--events_per_second", type=int, default=1, help="Number of events to generate per second")
     parser.add_argument("-r", "--runtime", type=int, default=0, help="Total running time in seconds")    
     args = parser.parse_args(args)
@@ -180,20 +106,13 @@ def parse_arguments(args=None):
     return args
 
 
-def configure_logger(level, output, format):
+def configure_logger(level, output):
     # Check if level is a valid logging level
     log_level = getattr(logging, level.upper(), None)
     if log_level is None:
         raise ValueError(f"Invalid logging level '{level}'")
-
-    # Set the output format to either 'cef' or 'syslog'
-    if format not in ['cef', 'syslog']:
-        raise ValueError("format must be either 'cef' or 'syslog'")
     
-    if format == 'syslog':
-        formatter = RFC5424Formatter()
-    elif format == 'cef':
-        formatter = CEFLogFormatter()
+    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
 
     # Check if output is a valid syslog facility or 'console'
     if output == 'console':
@@ -206,14 +125,16 @@ def configure_logger(level, output, format):
     handler.setLevel(log_level)
     handler.setFormatter(formatter)
 
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(script_name)
+
+    # Set the minimum logging level for the logger
     logger.setLevel(log_level)
     logger.addHandler(handler)
 
     return logger
 
 
-def generate_random_log_data(i):
+def generate_random_log_data():
 
     # Map each combination of auth result and auth event to a unique number
     device_event_class_id_map = {
@@ -226,7 +147,8 @@ def generate_random_log_data(i):
         ('failure', 'password_change'): 7,
         ('failure', 'account_creation'): 8,
         ('failure', 'invalid_credentials'): 9,
-        ('failure', 'expired_password'): 10,  
+        ('failure', 'expired_password'): 10, 
+        ('failure', 'account_locked'): 11
     }
     
     response_map = {
@@ -234,7 +156,6 @@ def generate_random_log_data(i):
         'failure': 'deny', 
     }
 
-    decisions = ['allow', 'deny']
     reasons = ['unknown', 'expired_password', 'invalid_credentials']
     responses = ['success', 'failure']
     auth_events = ['login', 'logout', 'password_change', 'account_creation']
@@ -247,16 +168,16 @@ def generate_random_log_data(i):
     user = random.choice(users)
 
     log_data = {
-        'device_vendor': 'Contoso',
-        'device_product': 'auth_server',
-        'device_version': '1.0',
-        'device_event_class_id': device_event_class_id_map[(response, auth_event)],
-        'name': 'Log Simulator - Auth Event',
-        'severity': random.randint(1, 10),
+        'deviceVendor': 'Contoso',
+        'deviceProduct': 'Logging Simulator',
+        'deviceVersion': '1.0',
+        'signatureId': device_event_class_id_map[(response, auth_event)],
+        'name': auth_event,
+        'severity': str(random.randint(1, 10)),
         'extension': {
             'src': f'192.168.0.{random.randint(1, 255)}',
             'dst': f'192.168.0.{random.randint(1, 255)}',
-            'spt': random.randint(1024, 65535),
+            'spt': str(random.randint(1024, 65535)),
             'dpt': 22,
             'response': response,
             'user': user,
@@ -272,17 +193,36 @@ def generate_random_log_data(i):
     return log_data
 
 
-def generate_log_message(format, log_data, level, facility):
-    level_number = getattr(logging, level.upper(), None)
-    if level_number is None:
-        raise ValueError(f"Invalid logging level '{level}'")
+def format_cef_message(log_data):
+    cef_formatted_message = CEFEvent()
 
+    extensions = ' '.join(f'{k}={v}' for k, v in log_data['extension'].items())
+
+    cef_formatted_message.set_field('deviceVendor', log_data['deviceVendor'])
+    cef_formatted_message.set_field('deviceProduct', log_data['deviceProduct'])
+    cef_formatted_message.set_field('deviceVersion', log_data['deviceVersion'])
+    cef_formatted_message.set_field('signatureId', str(log_data['signatureId']))
+    cef_formatted_message.set_field('name', log_data['name'])
+    cef_formatted_message.set_field('severity', log_data['severity'])
+    
+    # split the extension into key value pairs and add them to the cef event
+    for extension in extensions.split():
+        key, value = extension.split('=')
+        cef_formatted_message.set_field(key, value)
+
+    return cef_formatted_message
+
+
+def format_syslog_message(log_data):
+    syslog_formatted_message = f"{log_data['deviceVendor']}: User='{log_data['extension']['user']}' Action='{log_data['name']}' response='{log_data['extension']['response']}'"
+    return syslog_formatted_message
+
+
+def generate_log_message(format):   
     if format == 'syslog':
-        extension = ' '.join(f'{k}={v}' for k, v in log_data['extension'].items())
-        return f"{log_data['device_vendor']} {level} {log_data['extension']['act']} {log_data['device_event_class_id']} {log_data['extension']['user']} {log_data['extension']['outcome']} {log_data['extension']['reason']} {extension}"
+        return format_syslog_message(generate_random_log_data())
     elif format == 'cef':
-        extension = ' '.join(f'{k}={v}' for k, v in log_data['extension'].items())
-        return f"CEF:0|{log_data['device_vendor']}|{log_data['device_product']}|{log_data['device_version']}|{log_data['device_event_class_id']}|{log_data['name']}|{level_number}|{extension}"
+        return format_cef_message(generate_random_log_data())
     else:
         raise ValueError(f"Invalid format value '{format}'. Format must be either 'syslog' or 'cef'.")
 
@@ -291,38 +231,43 @@ def generate_logs(format, facility, level, events_per_second, runtime):
     # Validate arguments
     if not isinstance(events_per_second, (int, float)) or events_per_second <= 0:
         raise ValueError("events_per_second must be 0 or a positive number")
+    
     if level.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         raise ValueError("level must be one of 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'")
+    
     if not isinstance(runtime, int) or runtime < 0:
         raise ValueError("runtime must be a non-negative integer")
+    
     if facility not in ['console'] + valid_facilities:
         raise ValueError("facility must be 'console' or a valid syslog facility")
-
-    logger = logging.getLogger(__name__)
+    
+    level_number = getattr(logging, level.upper(), None)
+    if level_number is None:
+        raise ValueError(f"Invalid logging level '{level}'")
+    
+    logger = logging.getLogger(script_name)
 
     start_time = time.time()
 
     while True:
+        # Check if runtime has been exceeded
+        if runtime > 0 and time.time() - start_time >= runtime:
+            break
+
         log_start_time = time.time()
 
         for i in range(events_per_second):
-            log_data = generate_random_log_data(i)
             try:
-                log_message = generate_log_message(format, log_data, level, facility)
-                logger.log(log_level, log_message)
+                log_message = generate_log_message(format)
+                logger.log(level_number, log_message)
             except ValueError as e:
                 logging.error(str(e))
                 print(str(e))
                 return
 
-        # Check if runtime has been exceeded
-        if runtime > 0 and time.time() - start_time >= runtime:
-            break
-
         elapsed_time = time.time() - log_start_time
         sleep_time = max(0, 1/events_per_second - elapsed_time)
         time.sleep(sleep_time)
-
 
 
 def main():

@@ -155,6 +155,18 @@ check_python() {
     fi
 }
 
+install_python_packages() {
+    echo -e "${NC}Installing Python packages${NC}"
+    pip install -r "$source_path/requirements.txt"
+
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to install Python packages${NC}" 1>&2
+        exit 1
+    else
+        echo -e "${GREEN}Successfully installed Python packages${NC}"
+    fi
+}
+
 # Make the Python script executable function
 make_script_executable() {
     echo -e "${NC}Making the Python script executable${NC}"
@@ -328,6 +340,7 @@ main() {
         echo -e "${BLUE}Installing Linux Log Generator${NC}"
         check_apt_get
         check_python
+        install_python_packages
         make_script_executable
         copy_script_files
         if $install_as_service; then
