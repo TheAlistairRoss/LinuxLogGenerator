@@ -222,7 +222,7 @@ def format_syslog_message(log_data):
 def generate_log_message(format): 
 
     log_message = generate_random_log_data()  
-    level_number = log_message['severity']
+    level_number_severity = int(log_message['severity'])
 
     if format == 'syslog':
         formatted_message = format_syslog_message(log_message)
@@ -231,8 +231,8 @@ def generate_log_message(format):
     else:
         raise ValueError(f"Invalid format value '{format}'. Format must be either 'syslog' or 'cef'.")
     
-    #return level_number, formatted_message as a tuple
-    return level_number, formatted_message
+    #return level_number_severity, formatted_message as a tuple
+    return level_number_severity, formatted_message
 
 def generate_logs(logger, format, facility, level, events_per_second, runtime):
     # Validate arguments
@@ -248,8 +248,7 @@ def generate_logs(logger, format, facility, level, events_per_second, runtime):
     if facility not in ['console'] + valid_facilities:
         raise ValueError("facility must be 'console' or a valid syslog facility")
     
-    level_number = getattr(logging, level.upper(), None)
-    if level_number is None:
+    if getattr(logging, level.upper(), None) is None:
         raise ValueError(f"Invalid logging level '{level}'")
     
     start_time = time.time()
