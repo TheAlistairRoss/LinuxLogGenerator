@@ -206,7 +206,7 @@ copy_files() {
     local source_path=$1
     local destination_path=$2
     echo -e "${NC}Copying $source_path to $destination_path${NC}"
-    sudo cp "$source_path" "$destination_path"
+    cp "$source_path" "$destination_path"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to copy file${NC}" 1>&2
         exit 1
@@ -240,7 +240,7 @@ copy_service_files() {
 # Remove the service file function
 remove_service_file() {
     echo -e "${NC}Removing $destination_path_to_service_file${NC}"
-    sudo rm "$destination_path_to_service_file"
+    rm "$destination_path_to_service_file"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to remove service file${NC}" 1>&2
         exit 1
@@ -252,7 +252,7 @@ remove_service_file() {
 # Reload the systemd daemon function
 reload_systemd() {
     echo -e "${NC}Reloading systemd daemon${NC}"
-    sudo systemctl daemon-reload
+    systemctl daemon-reload
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to reload systemd daemon${NC}" 1>&2
         exit 1
@@ -263,7 +263,7 @@ reload_systemd() {
 # Start the service function
 start_service() {
     echo -e "${NC}Starting log_simulator daemon${NC}"
-    sudo systemctl start log_simulator
+    systemctl start log_simulator
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to start daemon${NC}" 1>&2
         exit 1
@@ -275,18 +275,17 @@ start_service() {
 # Check if the log_simulator service is already running
 check_service_running() {
     echo -e "${NC}Checking if log_simulator service is running${NC}"
-    if sudo systemctl is-active --quiet log_simulator; then
+    if systemctl is-active --quiet log_simulator; then
         systemctl restart log_simulator
-        return 0
     else
-        start_service()
+        start_service
     fi
 }
 
 # Stop the service function
 stop_service() {
     echo -e "${NC}Stopping log_simulator daemon${NC}"
-    sudo systemctl stop log_simulator
+    systemctl stop log_simulator
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to stop daemon${NC}" 1>&2
         exit 1
@@ -298,7 +297,7 @@ stop_service() {
 # Enable the service to start on boot function
 enable_service() {
     echo -e "${NC}Enabling log_simulator daemon to start on boot${NC}"
-    sudo systemctl enable log_simulator
+    systemctl enable log_simulator
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to enable daemon on boot${NC}" 1>&2
         exit 1
@@ -308,7 +307,7 @@ enable_service() {
 # Disable the service to start on boot function
 disable_service() {
     echo -e "${NC}Disabling log_simulator daemon to start on boot${NC}"
-    sudo systemctl disable log_simulator
+    systemctl disable log_simulator
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to disable daemon on boot${NC}" 1>&2
         exit 1
@@ -332,7 +331,7 @@ check_install_directory() {
 remove_install_directory() {
     if check_install_directory ; then
         echo -e "${NC}Removing $destination_path_to_log_simulator${NC}"
-        sudo rm -r "$destination_path_to_log_simulator"
+        rm -r "$destination_path_to_log_simulator"
         if [ $? -ne 0 ]; then
             echo -e "${RED}Failed to remove Python script directory${NC}" 1>&2
             exit 1
