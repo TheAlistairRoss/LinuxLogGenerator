@@ -110,7 +110,7 @@ def configure_logger(level, output):
     if log_level is None:
         raise ValueError(f"Invalid logging level '{level}'")
     
-    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+    formatter = logging.Formatter('%(name)s %(levelname)s %(message)s')
 
     # Check if output is a valid syslog facility or 'console'
     if output == 'console':
@@ -134,19 +134,19 @@ def configure_logger(level, output):
 
 def generate_random_log_data():
 
-    # Map each combination of auth result and auth event to a unique number
+    # Map each combination of auth result and auth event to a signatureId and severity level
     device_event_class_id_map = {
-        ('success', 'login'): 1,
-        ('success', 'logout'): 2,
-        ('success', 'password_change'): 3,
-        ('success', 'account_creation'): 4,
-        ('failure', 'login'): 5,
-        ('failure', 'logout'): 6,
-        ('failure', 'password_change'): 7,
-        ('failure', 'account_creation'): 8,
-        ('failure', 'invalid_credentials'): 9,
-        ('failure', 'expired_password'): 10, 
-        ('failure', 'account_locked'): 11
+        ('success', 'login'): (1, 20),
+        ('success', 'logout'): (2, 20),
+        ('success', 'password_change'): (3, 20),
+        ('success', 'account_creation'): (4, 20),
+        ('failure', 'login'): (5, 40),
+        ('failure', 'logout'): (6, 40),
+        ('failure', 'password_change'): (7, 40),
+        ('failure', 'account_creation'): (8, 40),
+        ('failure', 'invalid_credentials'): (9, 40),
+        ('failure', 'expired_password'): (10, 30),
+        ('failure', 'account_locked'): (11, 30)
     }
     
     response_map = {
@@ -159,19 +159,22 @@ def generate_random_log_data():
     auth_events = ['login', 'logout', 'password_change', 'account_creation']
     users = ['alice', 'bob', 'charlie']
 
+
     response = random.choice(responses)
     auth_event = random.choice(auth_events)
     decision = response_map[response]
     reason = random.choice(reasons) if response == 'failure' else None
     user = random.choice(users)
 
+    signatureId, level = device_event_class_id_map[(response, auth_event)]
+
     log_data = {
         'deviceVendor': 'Contoso',
         'deviceProduct': 'Logging Simulator',
         'deviceVersion': '1.0',
-        'signatureId': device_event_class_id_map[(response, auth_event)],
+        'signatureId': signatureId,
         'name': auth_event,
-        'severity': str(random.randint(1, 10)),
+        'severity': str(level),
         'extension': {
             'src': f'192.168.0.{random.randint(1, 255)}',
             'dst': f'192.168.0.{random.randint(1, 255)}',
@@ -216,14 +219,20 @@ def format_syslog_message(log_data):
     return syslog_formatted_message
 
 
-def generate_log_message(format):   
+def generate_log_message(format): 
+
+    log_message = generate_random_log_data()  
+    level_number = log_message['severity']
+
     if format == 'syslog':
-        return format_syslog_message(generate_random_log_data())
+        formatted_message = format_syslog_message(log_message)
     elif format == 'cef':
-        return format_cef_message(generate_random_log_data())
+        formatted_message = format_cef_message(log_message)
     else:
         raise ValueError(f"Invalid format value '{format}'. Format must be either 'syslog' or 'cef'.")
-
+    
+    #return level_number, formatted_message as a tuple
+    return level_number, formatted_message
 
 def generate_logs(logger, format, facility, level, events_per_second, runtime):
     # Validate arguments
@@ -254,7 +263,7 @@ def generate_logs(logger, format, facility, level, events_per_second, runtime):
 
         for i in range(events_per_second):
             try:
-                log_message = generate_log_message(format)
+                level_number, log_message = generate_log_message(format)
                 logger.log(level_number, log_message)
             except ValueError as e:
                 logging.error(str(e))
