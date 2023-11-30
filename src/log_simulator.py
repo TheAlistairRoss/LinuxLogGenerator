@@ -289,8 +289,6 @@ def generate_log_message(format, log_data, level, facility):
 
 def generate_logs(format, facility, level, events_per_second, runtime):
     # Validate arguments
-    if not isinstance(events, int) or events < 0:
-        raise ValueError("events must be a non-negative integer")
     if not isinstance(events_per_second, (int, float)) or events_per_second <= 0:
         raise ValueError("events_per_second must be 0 or a positive number")
     if level.upper() not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
@@ -330,7 +328,7 @@ def generate_logs(format, facility, level, events_per_second, runtime):
 def main():
     args = parse_arguments()
     configure_logger(args.level, args.facility, args.format)
-    generate_logs(args.format, args.facility, args.events, args.rate, args.level, args.runtime)
+    generate_logs(args.format, args.facility, args.level, args.events_per_second, args.runtime)
 
 
 if __name__ == "__main__":
