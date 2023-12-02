@@ -104,13 +104,17 @@ def parse_arguments(args=None):
     return args
 
 
-def configure_logger(level, output):
+def configure_logger(level, output, format):
     # Check if level is a valid logging level
     log_level = getattr(logging, level.upper(), None)
     if log_level is None:
         raise ValueError(f"Invalid logging level '{level}'")
     
-    formatter = logging.Formatter('%(name)s %(message)s')
+    #Set formatter
+    if format == 'syslog':
+        formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+    elif format == 'cef':
+        formatter = logging.Formatter('%(message)s')
 
     # Check if output is a valid syslog facility or 'console'
     if output == 'console':
@@ -284,7 +288,7 @@ def generate_logs(logger, format, facility, level, events_per_second, runtime):
 
 def main():
     args = parse_arguments()
-    logger = configure_logger(args.level, args.facility)
+    logger = configure_logger(args.level, args.facility, args.format)
     generate_logs(logger, args.format, args.facility, args.level, args.events_per_second, args.runtime)
 
 
