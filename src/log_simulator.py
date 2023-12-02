@@ -274,20 +274,20 @@ def generate_logs(logger, format, facility, level, events_per_second, runtime):
     start_time = time.time()
 
     while True:
-        # Check if runtime has been exceeded
+    # Check if runtime has been exceeded
         if runtime > 0 and time.time() - start_time >= runtime:
             break
 
         log_start_time = time.time()
 
-        for i in range(events_per_second):
-            try:
-                level_number, log_message = generate_log_message(format)
-                logger.log(level_number, log_message)
-            except ValueError as e:
-                logging.error(str(e))
-                print(str(e))
-                return
+        # Generate one event
+        try:
+            level_number, log_message = generate_log_message(format)
+            logger.log(level_number, log_message)
+        except ValueError as e:
+            logging.error(str(e))
+            print(str(e))
+            return
 
         elapsed_time = time.time() - log_start_time
         sleep_time = max(0, 1/events_per_second - elapsed_time)
