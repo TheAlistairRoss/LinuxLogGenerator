@@ -84,19 +84,27 @@ def parse_arguments(args=None):
     for arg in vars(args):
         print(f"{arg}: {getattr(args, arg)}")
 
-    # Check the types of config inputs
-    if not isinstance(args.events_per_second, int):
-        print("Error: 'events_per_second' in the config file must be an integer.")
+    # events_per_second must be a float
+    if not isinstance(args.events_per_second, float):
+        print("Error: 'events_per_second' in the config file must be an floating point number.")
         sys.exit(1)
 
+    # runtime must be an integer
     if not isinstance(args.runtime, int):
         print("Error: 'runtime' in the config file must be an integer.")
         sys.exit(1)
 
+    # events_per_second must be greater than or equal to 0
     if args.events_per_second < 0:
         print("Error: Number of events must be greater than or equal to 0.")
         sys.exit(1)
 
+    # runtime must be greater than or equal to 0
+    if args.runtime < 0:
+        print("Error: Runtime must be greater than or equal to 0.")
+        sys.exit(1)
+
+    # If level is DEBUG, runtime must be greater than 0    
     if args.level == "DEBUG" and args.runtime == 0:
         print("Error: Debug logging requires a finite runtime.")
         sys.exit(1)
