@@ -120,7 +120,8 @@ def configure_logger(level, output, format):
     
     #Set formatter
     if format == 'syslog':
-        formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+        #formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+        formatter = logging.Formatter('%(name)s %(levelname)s %(message)s')
     elif format == 'cef':
         formatter = logging.Formatter('%(message)s')
 
