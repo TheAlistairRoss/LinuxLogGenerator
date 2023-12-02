@@ -58,7 +58,7 @@ def parse_arguments(args=None):
     parser.add_argument("-f", "--format", type=str, choices=["syslog", "cef"], default="syslog", help="The logging format. Default is 'syslog'.")
     parser.add_argument("-F", "--facility", type=str, choices=valid_facilities, default="syslog", help="The logging facility. Default is 'syslog'.")
     parser.add_argument("-l", "--level", type=str, choices=valid_levels, default="INFO", help="The minimum logging level that will be processed. Default is 'INFO'.")
-    parser.add_argument("-e", "--events_per_second", type=int, default=1, help="Number of events to generate per second")
+    parser.add_argument("-e", "--events_per_second", type=float, default=1, help="Number of events to generate per second")
     parser.add_argument("-r", "--runtime", type=int, default=0, help="Total running time in seconds")    
     args = parser.parse_args(args)
 
