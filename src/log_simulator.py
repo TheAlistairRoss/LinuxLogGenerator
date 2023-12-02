@@ -69,7 +69,7 @@ def parse_arguments(args=None):
         args.format = config.get('DEFAULT', 'format', fallback=args.format)
         args.facility = config.get('DEFAULT', 'facility', fallback=args.facility)
         args.level = config.get('DEFAULT', 'level', fallback=args.level)
-        args.events_per_second = config.getint('DEFAULT', 'events_per_second', fallback=args.events_per_second)
+        args.events_per_second = config.getfloat('DEFAULT', 'events_per_second', fallback=args.events_per_second)
         args.runtime = config.getint('DEFAULT', 'runtime', fallback=args.runtime)
 
     if not check_facility(args.facility):
